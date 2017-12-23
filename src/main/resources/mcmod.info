@@ -1,0 +1,19 @@
+[
+    {
+        "modid": "donationhavok",
+        "name": "DonationHavok",
+        "description": "Cause havok of any variety for you and your friends when a donation is received.",
+        "version": "${version}",
+        "mcversion": "${mcversion}",
+        "url": "",
+        "updateUrl": "",
+        "authorList": [
+            "Musician101"
+        ],
+        "credits": "Thanks to twitch.tv/Dwight and his fans",
+        "logoFile": "",
+        "screenshots": [],
+        "dependencies": [
+        ]
+    }
+]
