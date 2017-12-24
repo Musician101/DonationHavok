@@ -2,13 +2,18 @@ package io.musician101.donationhavok.network.message;
 
 import com.google.gson.JsonObject;
 import io.musician101.donationhavok.DonationHavok;
+import io.musician101.donationhavok.gui.BaseGUI;
 import io.musician101.donationhavok.gui.ConfigGUI;
 import io.musician101.donationhavok.streamlabs.StreamLabsTracker;
 import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import javax.annotation.Nonnull;
+import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
+import net.minecraft.util.text.ChatType;
+import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.TextFormatting;
 import net.minecraftforge.fml.common.network.ByteBufUtils;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessage;
 import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
@@ -42,11 +47,17 @@ public class JsonMessage implements IMessage {
 
     public static class MessageHandler implements IMessageHandler<JsonMessage, IMessage> {
 
+        @SuppressWarnings("MethodCallSideOnly")
         @Override
         public IMessage onMessage(JsonMessage message, MessageContext ctx) {
             StreamLabsTracker slt = GSON.fromJson(message.jsonObject, StreamLabsTracker.class);
             if (ctx.side == Side.CLIENT) {
-                new ConfigGUI(slt, false);
+                if (BaseGUI.isFrameActive("Donation Havok Configurator")) {
+                    Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.CHAT, new TextComponentString("The configurator is already open.").setStyle(new Style().setColor(TextFormatting.RED)));
+                }
+                else {
+                    new ConfigGUI(slt, false);
+                }
             }
             else {
                 DonationHavok instance = DonationHavok.INSTANCE;
