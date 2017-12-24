@@ -45,7 +45,14 @@ public class StreamLabsTrackerTypeAdapter implements JsonDeserializer<StreamLabs
         jsonObject.getAsJsonArray(REWARDS).forEach(jsonElement -> {
             JsonObject reward = jsonElement.getAsJsonObject();
             double minAmount = reward.get(MIN_AMOUNT).getAsDouble();
-            HavokRewards rewards = GSON.fromJson(reward.getAsJsonObject(REWARDS), HavokRewards.class);
+            HavokRewards rewards;
+            if (reward.has("rewards")) {
+                rewards = GSON.fromJson(reward.getAsJsonObject(REWARDS), HavokRewards.class);
+            }
+            else {
+                rewards = GSON.fromJson(reward, HavokRewards.class);
+            }
+
             rewardsMap.put(minAmount, rewards);
         });
         try {
@@ -72,7 +79,13 @@ public class StreamLabsTrackerTypeAdapter implements JsonDeserializer<StreamLabs
         JsonArray nonReplaceableBlocks = new JsonArray();
         src.getNonReplaceableBlocks().forEach(blockState -> nonReplaceableBlocks.add(Block.REGISTRY.getNameForObject(blockState.getBlock()).toString()));
         jsonObject.add(NON_REPLACEABLE_BLOCKS, nonReplaceableBlocks);
-        jsonObject.add(REWARDS, GSON.toJsonTree(src.getRewards(), new TypeToken<TreeMap<Double, HavokRewards>>(){}.getType()));
+        JsonArray rewards = new JsonArray();
+        src.getRewards().forEach((minAmount, havokRewards) -> {
+            JsonObject reward = GSON.toJsonTree(havokRewards).getAsJsonObject();
+            reward.addProperty(MIN_AMOUNT, minAmount);
+            rewards.add(reward);
+        });
+        jsonObject.add(REWARDS, rewards);
         return jsonObject;
     }
 }
