@@ -1,8 +1,6 @@
 package io.musician101.donationhavok.command;
 
 import io.musician101.donationhavok.DonationHavok;
-import io.musician101.donationhavok.gui.BaseGUI;
-import io.musician101.donationhavok.gui.ConfigGUI;
 import io.musician101.donationhavok.network.Network;
 import io.musician101.donationhavok.network.message.JsonMessage;
 import io.musician101.donationhavok.streamlabs.StreamLabsTracker.Donation;
@@ -19,9 +17,7 @@ import net.minecraft.command.WrongUsageException;
 import net.minecraft.entity.player.EntityPlayerMP;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
-import net.minecraft.util.text.TextFormatting;
 
 import static io.musician101.donationhavok.util.json.JsonUtils.GSON;
 
@@ -45,18 +41,8 @@ public class DHCommand extends CommandBase {
             String subCommand = args[0];
             EntityPlayerMP player = getCommandSenderAsPlayer(sender);
             if (subCommand.equalsIgnoreCase("config")) {
-                if (!player.getEntityWorld().isRemote) {
-                    Network.INSTANCE.sendTo(new JsonMessage(GSON.toJsonTree(DonationHavok.INSTANCE.getStreamLabsTracker()).getAsJsonObject()), (EntityPlayerMP) sender);
-                }
-                else {
-                    if (BaseGUI.isFrameActive("Donation Havok Configurator")) {
-                        player.sendMessage(new TextComponentString("The configurator is already open.").setStyle(new Style().setColor(TextFormatting.RED)));
-                        return;
-                    }
-
-                    new ConfigGUI(DonationHavok.INSTANCE.getStreamLabsTracker(), true);
-                }
-
+                Network.INSTANCE.sendTo(new JsonMessage(GSON.toJsonTree(DonationHavok.INSTANCE.getStreamLabsTracker()).getAsJsonObject()), (EntityPlayerMP) sender);
+                player.sendMessage(new TextComponentString("The config is being sent to you now. If the GUI doesn't open within a few seconds, you might not have the mod installed."));
                 return;
             }
             else if (subCommand.equalsIgnoreCase("reload")) {
