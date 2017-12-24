@@ -13,7 +13,6 @@ import io.musician101.donationhavok.havok.HavokRewards;
 import io.musician101.donationhavok.havok.HavokSound;
 import io.musician101.donationhavok.streamlabs.StreamLabsTracker;
 import io.musician101.donationhavok.util.json.typeadapter.BlockStateTypeAdapter;
-import io.musician101.donationhavok.util.json.typeadapter.DonationMapTypeAdapter;
 import io.musician101.donationhavok.util.json.typeadapter.HavokBlockTypeAdapter;
 import io.musician101.donationhavok.util.json.typeadapter.HavokCommandTypeAdapter;
 import io.musician101.donationhavok.util.json.typeadapter.HavokEntityTypeAdapter;
@@ -31,7 +30,6 @@ import io.musician101.donationhavok.util.json.typeadapter.NBTTagListTypeAdapter;
 import io.musician101.donationhavok.util.json.typeadapter.NonReplaceableBlocksTypeAdapter;
 import io.musician101.donationhavok.util.json.typeadapter.StreamLabsTrackerTypeAdapter;
 import java.util.List;
-import java.util.TreeMap;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTPrimitive;
@@ -61,7 +59,6 @@ public class JsonUtils {
             .registerTypeAdapter(NBTTagCompound.class, new NBTTagCompoundTypeAdapter())
             .registerTypeAdapter(HavokRewards.class, new HavokRewardsTypeAdapter())
             .registerTypeAdapter(new TypeToken<List<IBlockState>>(){}.getType(), new NonReplaceableBlocksTypeAdapter())
-            .registerTypeAdapter(new TypeToken<TreeMap<Double, HavokRewards>>(){}.getType(), new DonationMapTypeAdapter())
             .registerTypeAdapter(StreamLabsTracker.class, new StreamLabsTrackerTypeAdapter())
             .create();
     // @formatter:on
