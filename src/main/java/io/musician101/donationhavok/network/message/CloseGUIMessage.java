@@ -1,6 +1,5 @@
 package io.musician101.donationhavok.network.message;
 
-import io.musician101.donationhavok.DonationHavok;
 import io.netty.buffer.ByteBuf;
 import java.awt.Frame;
 import java.util.Arrays;
@@ -25,7 +24,6 @@ public class CloseGUIMessage implements IMessage {
         @Override
         public IMessage onMessage(CloseGUIMessage message, MessageContext ctx) {
             Arrays.stream(Frame.getFrames()).forEach(Frame::dispose);
-            DonationHavok.INSTANCE.getLogger().warn("test");
             return null;
         }
     }
