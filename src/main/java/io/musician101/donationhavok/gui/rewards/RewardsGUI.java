@@ -68,10 +68,9 @@ public class RewardsGUI extends BaseGUI<ConfigGUI> {
 
     @Override
     protected final void update(ConfigGUI prevGUI) {
-        HavokRewards havokRewards = new HavokRewards(allowTargetViaNoteCheckBox.isSelected(), targetAllPlayersCheckBox.isSelected(), Integer.valueOf(delayTextField.getText()), nameTextField.getText(), ((SortedListModel<Double>) tierTriggers.getModel()).getElements(), ((HavokBlockTableModel) blocksTable.getModel()).getElements(), ((HavokCommandTableModel) commandsTable.getModel()).getElements(), ((HavokEntityTableModel) entitiesTable.getModel()).getElements(), ((HavokItemStackTableModel) itemsTable.getModel()).getElements(), ((HavokMessageTableModel) messagesTable.getModel()).getElements(), ((HavokParticleTableModel) particlesTable.getModel()).getElements(), ((HavokSoundTableModel) soundsTable.getModel()).getElements(), ((SortedListModel<String>) targetPlayers.getModel()).getElements());
+        HavokRewards havokRewards = new HavokRewards(allowTargetViaNoteCheckBox.isSelected(), targetAllPlayersCheckBox.isSelected(), Integer.valueOf(delayTextField.getValue().toString()), nameTextField.getText(), ((SortedListModel<Double>) tierTriggers.getModel()).getElements(), ((HavokBlockTableModel) blocksTable.getModel()).getElements(), ((HavokCommandTableModel) commandsTable.getModel()).getElements(), ((HavokEntityTableModel) entitiesTable.getModel()).getElements(), ((HavokItemStackTableModel) itemsTable.getModel()).getElements(), ((HavokMessageTableModel) messagesTable.getModel()).getElements(), ((HavokParticleTableModel) particlesTable.getModel()).getElements(), ((HavokSoundTableModel) soundsTable.getModel()).getElements(), ((SortedListModel<String>) targetPlayers.getModel()).getElements());
         JTable rewards = prevGUI.rewardsTable;
-        ((HavokRewardsTableModel) rewards.getModel()).addReward(Double.parseDouble(minAmountTextField.getText()), havokRewards);
-        resizeTable(rewards);
+        ((HavokRewardsTableModel) rewards.getModel()).addReward(Double.parseDouble(minAmountTextField.getValue().toString()), havokRewards);
     }
 
     private JPanel targetPlayers(HavokRewards rewards) {

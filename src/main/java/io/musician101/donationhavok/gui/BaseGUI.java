@@ -20,7 +20,6 @@ import javax.swing.JPanel;
 import javax.swing.JTable;
 import javax.swing.SwingConstants;
 import javax.swing.table.DefaultTableCellRenderer;
-import javax.swing.table.TableCellRenderer;
 import javax.swing.table.TableColumn;
 import javax.swing.table.TableModel;
 
@@ -68,35 +67,25 @@ public abstract class BaseGUI<G extends BaseGUI> {
         table.setAutoCreateRowSorter(false);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.addMouseListener(mouseAdapter);
+        model.addTableModelListener(l -> {
+            resizeTable(table);
+        });
         resizeTable(table);
         return table;
     }
 
-    protected final void resizeTable(JTable table) {
+    private void resizeTable(JTable table) {
         for (int column = 0; column < table.getColumnCount(); column++) {
-            TableColumn tableColumn = table.getColumnModel().getColumn(column);
-            TableCellRenderer headerRenderer = tableColumn.getHeaderRenderer();
-            if (headerRenderer == null) {
-                headerRenderer = table.getTableHeader().getDefaultRenderer();
-            }
-
-            Component headerComponent = headerRenderer.getTableCellRendererComponent(table, tableColumn.getHeaderValue(), false, false, -1, column);
-            int prefWidth = Math.max(headerComponent.getPreferredSize().width, tableColumn.getMinWidth());
-            int maxWidth = tableColumn.getMaxWidth();
+            int width = 0;
             for (int row = 0; row < table.getRowCount(); row++) {
-                DefaultTableCellRenderer tcr = (DefaultTableCellRenderer) table.getCellRenderer(column, row);
-                tcr.setHorizontalAlignment(SwingConstants.CENTER);
-                Component component = table.prepareRenderer(tcr, row, column);
-                int width = component.getPreferredSize().width;
-                prefWidth = Math.max(prefWidth, width) + table.getIntercellSpacing().width + 20;
-
-                if (prefWidth >= maxWidth) {
-                    prefWidth = maxWidth;
-                    break;
-                }
+                DefaultTableCellRenderer renderer = (DefaultTableCellRenderer) table.getCellRenderer(row, column);
+                renderer.setHorizontalAlignment(SwingConstants.CENTER);
+                Component comp = renderer.getTableCellRendererComponent(table, table.getValueAt(row, column), false, false, row, column);
+                width = Math.max(width + table.getIntercellSpacing().width + 5, comp.getPreferredSize().width);
             }
 
-            tableColumn.setPreferredWidth(prefWidth);
+            TableColumn tableColumn = table.getColumnModel().getColumn(column);
+            tableColumn.setPreferredWidth(Math.max(width + 5, tableColumn.getPreferredWidth()));
         }
     }
 

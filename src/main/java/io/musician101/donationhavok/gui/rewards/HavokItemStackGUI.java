@@ -53,17 +53,15 @@ public class HavokItemStackGUI extends BaseGUI<RewardsGUI> {
         JOptionPane.showConfirmDialog(null, "NBT doesn't support booleans. Any booleans will be converted to bytes.", "Alert!", JOptionPane.DEFAULT_OPTION);
         JTable items = prevGUI.itemsTable;
         HavokItemStackTableModel model = (HavokItemStackTableModel) items.getModel();
-        ItemStack is = new ItemStack(Item.REGISTRY.getObject((ResourceLocation) itemComboBox.getSelectedItem()), Integer.valueOf(amountTextField.getText()), Integer.valueOf(damageTextField.getText()));
+        ItemStack is = new ItemStack(Item.REGISTRY.getObject((ResourceLocation) itemComboBox.getSelectedItem()), Integer.valueOf(amountTextField.getValue().toString()), Integer.valueOf(damageTextField.getValue().toString()));
         is.setTagCompound(GSON.fromJson(((HavokMapTreeNode) nbtTree.getModel().getRoot()).serialize(), NBTTagCompound.class));
-        HavokItemStack itemStack = new HavokItemStack(Integer.valueOf(delayTextField.getText()), is);
+        HavokItemStack itemStack = new HavokItemStack(Integer.valueOf(delayTextField.getValue().toString()), is);
         if (index == -1) {
             model.add(itemStack);
         }
         else {
             model.replace(index, itemStack);
         }
-
-        resizeTable(items);
     }
 
     private JPanel mainPanel(JFrame frame, HavokItemStack itemStack, RewardsGUI prevGUI) {

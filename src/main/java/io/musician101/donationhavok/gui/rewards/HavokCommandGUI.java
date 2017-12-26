@@ -36,15 +36,13 @@ public class HavokCommandGUI extends BaseGUI<RewardsGUI> {
     protected void update(RewardsGUI prevGUI) {
         JTable commands = prevGUI.commandsTable;
         HavokCommandTableModel model = (HavokCommandTableModel) commands.getModel();
-        HavokCommand havokCommand = new HavokCommand(Integer.valueOf(delayTextField.getText()), commandTextField.getText());
+        HavokCommand havokCommand = new HavokCommand(Integer.valueOf(delayTextField.getValue().toString()), commandTextField.getText());
         if (index == -1) {
             model.add(havokCommand);
         }
         else {
             model.replace(index, havokCommand);
         }
-
-        resizeTable(commands);
     }
 
     private JPanel mainPanel(JFrame frame, HavokCommand command, RewardsGUI prevGUI) {

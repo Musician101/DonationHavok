@@ -116,15 +116,13 @@ public class HavokBlockGUI extends BaseGUI<RewardsGUI> {
     protected final void update(RewardsGUI prevGUI) {
         JTable blocks = prevGUI.blocksTable;
         HavokBlockTableModel model = (HavokBlockTableModel) blocks.getModel();
-        HavokBlock havokBlock = new HavokBlock(Integer.valueOf(delayTextField.getText()), Integer.valueOf(xTextField.getText()), Integer.valueOf(yTextField.getText()), Integer.valueOf(zTextField.getText()), ((BlockStatePropertiesTableModel) blockStateTable.getModel()).getBlockState(), GSON.fromJson(((HavokMapTreeNode) tileEntityTree.getModel().getRoot()).serialize(), NBTTagCompound.class));
+        HavokBlock havokBlock = new HavokBlock(Integer.valueOf(delayTextField.getValue().toString()), Integer.valueOf(xTextField.getValue().toString()), Integer.valueOf(yTextField.getValue().toString()), Integer.valueOf(zTextField.getValue().toString()), ((BlockStatePropertiesTableModel) blockStateTable.getModel()).getBlockState(), GSON.fromJson(((HavokMapTreeNode) tileEntityTree.getModel().getRoot()).serialize(), NBTTagCompound.class));
         if (index == -1) {
             model.add(havokBlock);
         }
         else {
             model.replace(index, havokBlock);
         }
-
-        resizeTable(blocks);
     }
 
     private JPanel blockStatePanel(HavokBlock block) {

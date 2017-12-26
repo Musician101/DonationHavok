@@ -51,15 +51,13 @@ public class HavokSoundGUI extends BaseGUI<RewardsGUI> {
     protected void update(RewardsGUI prevGUI) {
         JTable soundsTable = prevGUI.soundsTable;
         HavokSoundTableModel model = (HavokSoundTableModel) soundsTable.getModel();
-        HavokSound havokSound = new HavokSound(Integer.valueOf(delayTextField.getText()), Double.valueOf(xTextField.getText()), Double.valueOf(yTextField.getText()), Double.valueOf(zTextField.getText()), Float.valueOf(pitchTextField.getText()), Float.valueOf(volumeTextField.getText()), (SoundEvent) soundComboBox.getSelectedItem());
+        HavokSound havokSound = new HavokSound(Integer.valueOf(delayTextField.getValue().toString()), Double.valueOf(xTextField.getValue().toString()), Double.valueOf(yTextField.getValue().toString()), Double.valueOf(zTextField.getValue().toString()), Float.valueOf(pitchTextField.getValue().toString()), Float.valueOf(volumeTextField.getValue().toString()), (SoundEvent) soundComboBox.getSelectedItem());
         if (index == -1) {
             model.add(havokSound);
         }
         else {
             model.replace(index, havokSound);
         }
-
-        resizeTable(soundsTable);
     }
 
     private JPanel mainPanel(JFrame frame, HavokSound sound, RewardsGUI prevGUI) {

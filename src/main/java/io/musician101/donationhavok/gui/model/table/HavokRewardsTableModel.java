@@ -19,6 +19,7 @@ public class HavokRewardsTableModel extends AbstractTableModel {
 
     public void addReward(double minAmount, HavokRewards rewards) {
         this.rewards.put(minAmount, rewards);
+        fireTableDataChanged();
     }
 
     public Map<Double, HavokRewards> getRewards() {
@@ -35,6 +36,7 @@ public class HavokRewardsTableModel extends AbstractTableModel {
 
     public void remove(int rowIndex) {
         rewards.remove(getMinAmountAt(rowIndex));
+        fireTableDataChanged();
     }
 
     @Override

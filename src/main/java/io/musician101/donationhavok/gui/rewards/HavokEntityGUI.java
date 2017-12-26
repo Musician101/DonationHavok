@@ -58,15 +58,13 @@ public class HavokEntityGUI extends BaseGUI<RewardsGUI> {
         HavokEntityTableModel model = (HavokEntityTableModel) entities.getModel();
         NBTTagCompound nbt = GSON.fromJson(((HavokMapTreeNode) nbtTree.getModel().getRoot()).serialize(), NBTTagCompound.class);
         nbt.setString(ID, entityComboBox.getSelectedItem().toString());
-        HavokEntity entity = new HavokEntity(Integer.valueOf(delayTextField.getText()), Double.valueOf(xTextField.getText()), Double.valueOf(yTextField.getText()), Double.valueOf(zTextField.getText()), nbt);
+        HavokEntity entity = new HavokEntity(Integer.valueOf(delayTextField.getValue().toString()), Double.valueOf(xTextField.getValue().toString()), Double.valueOf(yTextField.getValue().toString()), Double.valueOf(zTextField.getValue().toString()), nbt);
         if (index == -1) {
             model.add(entity);
         }
         else {
             model.replace(index, entity);
         }
-
-        resizeTable(entities);
     }
 
     private JPanel mainPanel(JFrame frame, HavokEntity entity, RewardsGUI prevGUI) {

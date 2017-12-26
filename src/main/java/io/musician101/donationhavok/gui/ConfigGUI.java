@@ -129,7 +129,6 @@ public final class ConfigGUI extends BaseGUI<BaseGUI> {
                 }
             }
         });
-        resizeTable(rewardsTable);
         panel.add(new JScrollPane(rewardsTable), gbc(0, 1));
         JPanel rewardsTableButtons = gridBagLayoutPanel();
         JButton newButton = parseJButton("New", l -> new RewardsGUI(0, new HavokRewards(), this));
@@ -144,7 +143,6 @@ public final class ConfigGUI extends BaseGUI<BaseGUI> {
             double amount = model.getMinAmountAt(row);
             new RewardsGUI(amount, model.getRewardsAt(row), ConfigGUI.this);
         });
-
         rewardsTableButtons.add(flowLayoutPanel(editButton), gbc(1, 0));
         JButton deleteButton = parseJButton("Delete", l -> {
             int row = rewardsTable.getSelectedRow();
@@ -155,7 +153,6 @@ public final class ConfigGUI extends BaseGUI<BaseGUI> {
             ((HavokRewardsTableModel) rewardsTable.getModel()).remove(row);
             rewardsTable.validate();
         });
-
         rewardsTableButtons.add(flowLayoutPanel(deleteButton), gbc(2, 0));
         panel.add(flowLayoutPanel(rewardsTableButtons), gbc(0, 2));
         return panel;
@@ -166,7 +163,7 @@ public final class ConfigGUI extends BaseGUI<BaseGUI> {
         JsonObject jsonObject = new JsonObject();
         jsonObject.addProperty(ACCESS_TOKEN, new String(accessTokenPasswordField.getPassword()));
         jsonObject.addProperty(GENERATE_BOOK, generateBookCheckBox.isSelected());
-        jsonObject.addProperty(DELAY, delayTextField.getText());
+        jsonObject.addProperty(DELAY, delayTextField.getValue().toString());
         jsonObject.addProperty(MC_NAME, mcNameTextField.getText());
         jsonObject.addProperty(STREAMER_NAME, streamerNameTextField.getText());
         jsonObject.addProperty(REPLACE_UNBREAKABLE_BLOCKS, replaceUnbreakableBlocksCheckBox.isSelected());

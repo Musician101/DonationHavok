@@ -43,15 +43,13 @@ public class HavokMessageGUI extends BaseGUI<RewardsGUI> {
     protected void update(RewardsGUI prevGUI) {
         JTable messagesTable = prevGUI.messagesTable;
         HavokMessageTableModel model = (HavokMessageTableModel) messagesTable.getModel();
-        HavokMessage havokMessage = new HavokMessage(Integer.valueOf(delayTextField.getText()), broadcastCheckBox.isSelected(), ITextComponent.Serializer.jsonToComponent(((HavokMapTreeNode) messageTree.getModel().getRoot()).serialize().toString()));
+        HavokMessage havokMessage = new HavokMessage(Integer.valueOf(delayTextField.getValue().toString()), broadcastCheckBox.isSelected(), ITextComponent.Serializer.jsonToComponent(((HavokMapTreeNode) messageTree.getModel().getRoot()).serialize().toString()));
         if (index == -1) {
             model.add(havokMessage);
         }
         else {
             model.replace(index, havokMessage);
         }
-
-        resizeTable(messagesTable);
     }
 
     private JPanel mainPanel(JFrame frame, HavokMessage message, RewardsGUI prevGUI) {

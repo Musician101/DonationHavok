@@ -51,15 +51,13 @@ public class HavokParticleGUI extends BaseGUI<RewardsGUI> {
     protected void update(RewardsGUI prevGUI) {
         JTable particlesTable = prevGUI.particlesTable;
         HavokParticleTableModel model = (HavokParticleTableModel) particlesTable.getModel();
-        HavokParticle havokParticle = new HavokParticle(Integer.valueOf(delayTextField.getText()), Double.valueOf(xTextField.getText()), Double.valueOf(yTextField.getText()), Double.valueOf(zTextField.getText()), Double.valueOf(xVelocityTextField.getText()), Double.valueOf(yVelocityTextField.getText()), Double.valueOf(zVelocityTextField.getText()), (EnumParticleTypes) particleComboBox.getSelectedItem());
+        HavokParticle havokParticle = new HavokParticle(Integer.valueOf(delayTextField.getValue().toString()), Double.valueOf(xTextField.getValue().toString()), Double.valueOf(yTextField.getValue().toString()), Double.valueOf(zTextField.getValue().toString()), Double.valueOf(xVelocityTextField.getValue().toString()), Double.valueOf(yVelocityTextField.getValue().toString()), Double.valueOf(zVelocityTextField.getValue().toString()), (EnumParticleTypes) particleComboBox.getSelectedItem());
         if (index == -1) {
             model.add(havokParticle);
         }
         else {
             model.replace(index, havokParticle);
         }
-
-        resizeTable(particlesTable);
     }
 
     private JPanel mainPanel(JFrame frame, HavokParticle particle, RewardsGUI prevGUI) {
