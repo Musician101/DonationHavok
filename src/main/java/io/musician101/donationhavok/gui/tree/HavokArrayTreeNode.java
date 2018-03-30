@@ -8,8 +8,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.swing.JOptionPane;
 
-import static io.musician101.donationhavok.util.json.JsonUtils.BYTE;
-import static io.musician101.donationhavok.util.json.JsonUtils.INTEGER;
+import static io.musician101.donationhavok.util.json.Keys.BYTE;
+import static io.musician101.donationhavok.util.json.Keys.INTEGER;
 
 public class HavokArrayTreeNode extends HavokBranchingTreeNode<JsonArray> {
 
@@ -20,7 +20,7 @@ public class HavokArrayTreeNode extends HavokBranchingTreeNode<JsonArray> {
         this(new JsonArray());
     }
 
-    public HavokArrayTreeNode(@Nonnull JsonArray json) {
+    private HavokArrayTreeNode(@Nonnull JsonArray json) {
         this(null, json);
     }
 
@@ -40,7 +40,7 @@ public class HavokArrayTreeNode extends HavokBranchingTreeNode<JsonArray> {
         this(key, new JsonArray(), byteArray, intArray);
     }
 
-    public HavokArrayTreeNode(@Nonnull JsonArray json, boolean byteArray, boolean intArray) {
+    private HavokArrayTreeNode(@Nonnull JsonArray json, boolean byteArray, boolean intArray) {
         this(null, json, byteArray, intArray);
     }
 
@@ -58,8 +58,16 @@ public class HavokArrayTreeNode extends HavokBranchingTreeNode<JsonArray> {
         return byteArray;
     }
 
+    public void setByteArray(boolean byteArray) {
+        this.byteArray = byteArray;
+    }
+
     public boolean isIntArray() {
         return intArray;
+    }
+
+    public void setIntArray(boolean intArray) {
+        this.intArray = intArray;
     }
 
     @Override
@@ -109,13 +117,5 @@ public class HavokArrayTreeNode extends HavokBranchingTreeNode<JsonArray> {
         JsonArray jsonObject = new JsonArray();
         children.stream().filter(HavokTreeNode.class::isInstance).map(HavokTreeNode.class::cast).forEach(child -> jsonObject.add(child.serialize()));
         return jsonObject;
-    }
-
-    public void setByteArray(boolean byteArray) {
-        this.byteArray = byteArray;
-    }
-
-    public void setIntArray(boolean intArray) {
-        this.intArray = intArray;
     }
 }

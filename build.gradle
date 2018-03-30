@@ -12,10 +12,44 @@ buildscript {
 }
 
 apply plugin: "net.minecraftforge.gradle.forge"
+apply from: "dh.gradle"
 
 version = modVersion
 group = modGroup
 archivesBaseName = modBaseName
+
+sourceCompatibility = 1.8
+targetCompatibility = 1.8
+
+repositories {
+    mavenCentral()
+    jcenter()
+}
+
+configurations {
+    shade
+    compile.extendsFrom shade
+}
+
+dependencies {
+    shade('org.reflections:reflections:0.9.10') {
+        exclude group: 'com.google.guava'
+        exclude group: 'com.google.code.findbugs'
+    }
+}
+
+jar {
+    configurations.shade.each {
+        from(it.isDirectory() ? it : project.zipTree(it)) {
+            exclude "META-INF/**"
+        }
+    }
+}
+
+reobfJar {
+    addExtraSrgLine "PK: org/reflections io/musician101/donationhavok/lib/org/reflections"
+    addExtraSrgLine "PK: javassist io/musician101/donationhavok/lib/javassist"
+}
 
 minecraft {
     version = project.forgeVersion
@@ -24,6 +58,9 @@ minecraft {
     replaceIn "Reference.java"
     replace "@VERSION@", "${modVersion}"
 
+    replaceIn "TwitchBot.java"
+    replace "@TOKEN@", "${project.ext.dhToken}"
+
     // the mappings can be changed at any time, and must be in the following format.
     // snapshot_YYYYMMDD   snapshot are built nightly.
     // stable_#            stables are built at the discretion of the MCP team.
@@ -31,13 +68,6 @@ minecraft {
     // simply re-run your setup task after changing the mappings to update your workspace.
     mappings = project.mcpVersion
     // makeObfSourceJar = false // an Srg named sources jar is made by default. uncomment this to disable.
-}
-
-repositories {
-    mavenCentral()
-}
-
-dependencies {
 }
 
 processResources {

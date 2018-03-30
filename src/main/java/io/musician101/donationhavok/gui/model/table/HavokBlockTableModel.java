@@ -1,6 +1,6 @@
 package io.musician101.donationhavok.gui.model.table;
 
-import io.musician101.donationhavok.havok.HavokBlock;
+import io.musician101.donationhavok.handler.havok.HavokBlock;
 import java.util.List;
 import java.util.stream.Collectors;
 import net.minecraft.block.Block;

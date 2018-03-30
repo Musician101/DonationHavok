@@ -16,24 +16,36 @@ import javax.swing.JTable;
 @SuppressWarnings("unchecked")
 public class TableGUI<M extends ListTableModel<T>, T> extends BaseGUI<RewardsGUI> {
 
-    private JPanel panel;
+    private final JPanel panel;
     private JTable table;
 
     public TableGUI(M model, T defaultObject, BiConsumer<T, Integer> openGUI) {
         panel = mainPanel(model, defaultObject, openGUI);
     }
 
+    private JPanel buttonPanel(Class<M> tableModelClass, T defaultObject, BiConsumer<T, Integer> openGUI) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.add(flowLayoutPanel(parseJButton("New", e -> openGUI.accept(defaultObject, -1))), gbc(0, 0));
+        panel.add(flowLayoutPanel(parseJButton("Copy", e -> getSelectedObject(table, (Class<T>) defaultObject.getClass()).ifPresent(object -> tableModelClass.cast(table.getModel()).add(object)))), gbc(1, 0));
+        panel.add(flowLayoutPanel(parseJButton("Edit", e -> getSelectedObject(table, (Class<T>) defaultObject.getClass()).ifPresent(t -> openGUI.accept(t, table.getSelectedRow())))), gbc(2, 0));
+        panel.add(flowLayoutPanel(parseJButton("Delete", e -> {
+            M model = tableModelClass.cast(table.getModel());
+            Arrays.stream(table.getSelectedRows()).forEach(model::remove);
+        })), gbc(3, 0));
+        return panel;
+    }
+
     public JPanel getPanel() {
         return panel;
     }
 
-    public JTable getTable() {
-        return table;
+    private Optional<T> getSelectedObject(JTable table, Class<T> objectType) {
+        int row = table.getSelectedRow();
+        return row == -1 ? Optional.empty() : Optional.of(objectType.cast(((ListTableModel) table.getModel()).getObjectAt(row)));
     }
 
-    @Override
-    protected final void update(RewardsGUI prevGUI) {
-
+    public JTable getTable() {
+        return table;
     }
 
     private JPanel mainPanel(M model, T defaultObject, BiConsumer<T, Integer> openGUI) {
@@ -54,20 +66,8 @@ public class TableGUI<M extends ListTableModel<T>, T> extends BaseGUI<RewardsGUI
         };
     }
 
-    private Optional<T> getSelectedObject(JTable table, Class<T> objectType) {
-        int row = table.getSelectedRow();
-        return row == -1 ? Optional.empty() : Optional.of(objectType.cast(((ListTableModel) table.getModel()).getObjectAt(row)));
-    }
+    @Override
+    protected final void update(RewardsGUI prevGUI) {
 
-    private JPanel buttonPanel(Class<M> tableModelClass, T defaultObject, BiConsumer<T, Integer> openGUI) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(flowLayoutPanel(parseJButton("New", e -> openGUI.accept(defaultObject, -1))), gbc(0, 0));
-        panel.add(flowLayoutPanel(parseJButton("Copy", e -> getSelectedObject(table, (Class<T>) defaultObject.getClass()).ifPresent(object -> tableModelClass.cast(table.getModel()).add(object)))), gbc(1, 0));
-        panel.add(flowLayoutPanel(parseJButton("Edit", e -> getSelectedObject(table, (Class<T>) defaultObject.getClass()).ifPresent(t -> openGUI.accept(t, table.getSelectedRow())))), gbc(2, 0));
-        panel.add(flowLayoutPanel(parseJButton("Delete", e -> {
-            M model = tableModelClass.cast(table.getModel());
-            Arrays.stream(table.getSelectedRows()).forEach(model::remove);
-        })), gbc(3, 0));
-        return panel;
     }
 }

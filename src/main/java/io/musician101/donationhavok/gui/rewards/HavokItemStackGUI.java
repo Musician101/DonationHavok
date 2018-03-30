@@ -4,7 +4,7 @@ import io.musician101.donationhavok.gui.BaseGUI;
 import io.musician101.donationhavok.gui.model.SortedComboBoxModel;
 import io.musician101.donationhavok.gui.model.table.HavokItemStackTableModel;
 import io.musician101.donationhavok.gui.tree.HavokMapTreeNode;
-import io.musician101.donationhavok.havok.HavokItemStack;
+import io.musician101.donationhavok.handler.havok.HavokItemStack;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.text.NumberFormat;
@@ -24,17 +24,16 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 
-import static io.musician101.donationhavok.util.json.JsonUtils.GSON;
+import static io.musician101.donationhavok.util.json.JsonKeyProcessor.GSON;
 
 public class HavokItemStackGUI extends BaseGUI<RewardsGUI> {
 
     private final int index;
-    private JComboBox<ResourceLocation> itemComboBox;
     private JFormattedTextField amountTextField;
     private JFormattedTextField damageTextField;
     private JFormattedTextField delayTextField;
+    private JComboBox<ResourceLocation> itemComboBox;
     private JTree nbtTree;
-    private JsonPanel jsonPanel;
 
     public HavokItemStackGUI(HavokItemStack itemStack, int index, RewardsGUI prevGUI) {
         this.index = index;
@@ -47,36 +46,17 @@ public class HavokItemStackGUI extends BaseGUI<RewardsGUI> {
         parseJFrame(name, prevGUI, f -> mainPanel(f, itemStack, prevGUI));
     }
 
-    @SuppressWarnings("ConstantConditions")
-    @Override
-    protected void update(RewardsGUI prevGUI) {
-        JOptionPane.showConfirmDialog(null, "NBT doesn't support booleans. Any booleans will be converted to bytes.", "Alert!", JOptionPane.DEFAULT_OPTION);
-        JTable items = prevGUI.itemsTable;
-        HavokItemStackTableModel model = (HavokItemStackTableModel) items.getModel();
-        ItemStack is = new ItemStack(Item.REGISTRY.getObject((ResourceLocation) itemComboBox.getSelectedItem()), Integer.valueOf(amountTextField.getValue().toString()), Integer.valueOf(damageTextField.getValue().toString()));
-        is.setTagCompound(GSON.fromJson(((HavokMapTreeNode) nbtTree.getModel().getRoot()).serialize(), NBTTagCompound.class));
-        HavokItemStack itemStack = new HavokItemStack(Integer.valueOf(delayTextField.getValue().toString()), is);
-        if (index == -1) {
-            model.add(itemStack);
-        }
-        else {
-            model.replace(index, itemStack);
-        }
-    }
-
-    private JPanel mainPanel(JFrame frame, HavokItemStack itemStack, RewardsGUI prevGUI) {
+    private JPanel buttonPanel(JFrame frame, RewardsGUI prevGUI) {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(leftPanel(frame, itemStack, prevGUI), gbc(0, 0));
-        panel.add(rightPanel(itemStack), gbc(1, 0));
-        return panel;
-    }
-
-    private JPanel leftPanel(JFrame frame, HavokItemStack itemStack, RewardsGUI prevGUI) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(delayPanel(itemStack), gbc(0, 0));
-        panel.add(idPanel(itemStack), gbc(0, 1));
-        panel.add(numericalPanel(itemStack), gbc(0, 2));
-        panel.add(buttonPanel(frame, prevGUI), gbc(0, 3));
+        JButton saveButton = parseJButton("Save", l -> {
+            update(prevGUI);
+            frame.dispose();
+        });
+        saveButton.setPreferredSize(new Dimension(195, 26));
+        panel.add(flowLayoutPanel(saveButton), gbc(0, 0));
+        JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
+        cancelButton.setPreferredSize(new Dimension(195, 26));
+        panel.add(flowLayoutPanel(cancelButton), gbc(1, 0));
         return flowLayoutPanel(panel);
     }
 
@@ -96,6 +76,22 @@ public class HavokItemStackGUI extends BaseGUI<RewardsGUI> {
         itemComboBox = new JComboBox<>(new SortedComboBoxModel<>(new ArrayList<>(Item.REGISTRY.getKeys()), Comparator.comparing(ResourceLocation::toString)));
         itemComboBox.setSelectedItem(Item.REGISTRY.getNameForObject(itemStack.getItemStack().getItem()));
         panel.add(flowLayoutPanel(itemComboBox), gbc(1, 0));
+        return panel;
+    }
+
+    private JPanel leftPanel(JFrame frame, HavokItemStack itemStack, RewardsGUI prevGUI) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.add(delayPanel(itemStack), gbc(0, 0));
+        panel.add(idPanel(itemStack), gbc(0, 1));
+        panel.add(numericalPanel(itemStack), gbc(0, 2));
+        panel.add(buttonPanel(frame, prevGUI), gbc(0, 3));
+        return flowLayoutPanel(panel);
+    }
+
+    private JPanel mainPanel(JFrame frame, HavokItemStack itemStack, RewardsGUI prevGUI) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.add(leftPanel(frame, itemStack, prevGUI), gbc(0, 0));
+        panel.add(rightPanel(itemStack), gbc(1, 0));
         return panel;
     }
 
@@ -119,27 +115,30 @@ public class HavokItemStackGUI extends BaseGUI<RewardsGUI> {
         return flowLayoutPanel(panel);
     }
 
-    private JPanel buttonPanel(JFrame frame, RewardsGUI prevGUI) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        JButton saveButton = parseJButton("Save", l -> {
-            update(prevGUI);
-            frame.dispose();
-        });
-        saveButton.setPreferredSize(new Dimension(195, 26));
-        panel.add(flowLayoutPanel(saveButton), gbc(0, 0));
-        JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
-        cancelButton.setPreferredSize(new Dimension(195, 26));
-        panel.add(flowLayoutPanel(cancelButton), gbc(1, 0));
-        return flowLayoutPanel(panel);
-    }
-
     private JPanel rightPanel(HavokItemStack itemStack) {
         JPanel panel = new JPanel(new GridBagLayout());
         NBTTagCompound nbt = itemStack.getItemStack().getTagCompound();
-        jsonPanel = new JsonPanel(nbt == null ? new NBTTagCompound() : nbt);
+        JsonPanel jsonPanel = new JsonPanel(nbt == null ? new NBTTagCompound() : nbt);
         nbtTree = jsonPanel.getTree();
         panel.add(parseJLabel("Tag", SwingConstants.CENTER), gbc(0, 0));
         panel.add(jsonPanel.getScrollPane(), gbc(0, 1));
         return flowLayoutPanel(panel);
+    }
+
+    @SuppressWarnings("ConstantConditions")
+    @Override
+    protected void update(RewardsGUI prevGUI) {
+        JOptionPane.showConfirmDialog(null, "NBT doesn't support booleans. Any booleans will be converted to bytes.", "Alert!", JOptionPane.DEFAULT_OPTION);
+        JTable items = prevGUI.itemsTable;
+        HavokItemStackTableModel model = (HavokItemStackTableModel) items.getModel();
+        ItemStack is = new ItemStack(Item.REGISTRY.getObject((ResourceLocation) itemComboBox.getSelectedItem()), Integer.valueOf(amountTextField.getValue().toString()), Integer.valueOf(damageTextField.getValue().toString()));
+        is.setTagCompound(GSON.fromJson(((HavokMapTreeNode) nbtTree.getModel().getRoot()).serialize(), NBTTagCompound.class));
+        HavokItemStack itemStack = new HavokItemStack(Integer.valueOf(delayTextField.getValue().toString()), is);
+        if (index == -1) {
+            model.add(itemStack);
+        }
+        else {
+            model.replace(index, itemStack);
+        }
     }
 }

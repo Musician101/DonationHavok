@@ -17,19 +17,6 @@ public final class Scheduler {
 
     }
 
-    public void scheduleTask(String name, int delay, Runnable runnable) {
-        if (delay == 0) {
-            runnable.run();
-        }
-        else {
-            tasks.add(new HavokTask(name, delay, runnable));
-        }
-    }
-
-    public void purge() {
-        tasks.clear();
-    }
-
     @SubscribeEvent
     public void onTick(ServerTickEvent event) {
         if (event.side == Side.SERVER && event.type == Type.SERVER && event.phase == Phase.START) {
@@ -37,6 +24,19 @@ public final class Scheduler {
             tasks.clear();
             tasks.addAll(tempTasks);
             tasks.forEach(HavokTask::tick);
+        }
+    }
+
+    public void purge() {
+        tasks.clear();
+    }
+
+    public void scheduleTask(String name, int delay, Runnable runnable) {
+        if (delay == 0) {
+            runnable.run();
+        }
+        else {
+            tasks.add(new HavokTask(name, delay, runnable));
         }
     }
 }

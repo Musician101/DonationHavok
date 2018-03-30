@@ -9,7 +9,7 @@ public abstract class HavokValueTreeNode<V> extends HavokTreeNode<JsonPrimitive>
     @Nonnull
     private V value;
 
-    public HavokValueTreeNode(@Nullable String key, @Nonnull V value) {
+    HavokValueTreeNode(@Nullable String key, @Nonnull V value) {
         super(key);
         this.value = value;
     }

@@ -12,14 +12,14 @@ import io.musician101.donationhavok.gui.model.table.HavokParticleTableModel;
 import io.musician101.donationhavok.gui.model.table.HavokRewardsTableModel;
 import io.musician101.donationhavok.gui.model.table.HavokSoundTableModel;
 import io.musician101.donationhavok.gui.render.ITextComponentTableCellRenderer;
-import io.musician101.donationhavok.havok.HavokBlock;
-import io.musician101.donationhavok.havok.HavokCommand;
-import io.musician101.donationhavok.havok.HavokEntity;
-import io.musician101.donationhavok.havok.HavokItemStack;
-import io.musician101.donationhavok.havok.HavokMessage;
-import io.musician101.donationhavok.havok.HavokParticle;
-import io.musician101.donationhavok.havok.HavokRewards;
-import io.musician101.donationhavok.havok.HavokSound;
+import io.musician101.donationhavok.handler.havok.HavokBlock;
+import io.musician101.donationhavok.handler.havok.HavokCommand;
+import io.musician101.donationhavok.handler.havok.HavokEntity;
+import io.musician101.donationhavok.handler.havok.HavokItemStack;
+import io.musician101.donationhavok.handler.havok.HavokMessage;
+import io.musician101.donationhavok.handler.havok.HavokParticle;
+import io.musician101.donationhavok.handler.havok.HavokRewards;
+import io.musician101.donationhavok.handler.havok.HavokSound;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionListener;
@@ -41,12 +41,7 @@ import javax.swing.SwingConstants;
 
 public class RewardsGUI extends BaseGUI<ConfigGUI> {
 
-    private JCheckBox allowTargetViaNoteCheckBox;
-    private JCheckBox targetAllPlayersCheckBox;
-    private JFormattedTextField delayTextField;
-    private JFormattedTextField minAmountTextField;
-    public JList<String> targetPlayers;
-    public JList<Double> tierTriggers;
+    private final int index;
     JTable blocksTable;
     JTable commandsTable;
     JTable entitiesTable;
@@ -54,34 +49,23 @@ public class RewardsGUI extends BaseGUI<ConfigGUI> {
     JTable messagesTable;
     JTable particlesTable;
     JTable soundsTable;
+    private JCheckBox allowTargetViaNoteCheckBox;
+    private JFormattedTextField delayTextField;
+    private JFormattedTextField minAmountTextField;
     private JTextField nameTextField;
+    private JCheckBox targetAllPlayersCheckBox;
+    private JList<String> targetPlayers;
+    private JList<Double> tierTriggers;
 
-    public RewardsGUI(double minAmount, HavokRewards rewards, ConfigGUI prevGUI) {
+    public RewardsGUI(double minAmount, HavokRewards rewards, int index, ConfigGUI prevGUI) {
+        this.index = index;
         String name = "Rewards for " + minAmount;
         if (isFrameActive(name)) {
             JOptionPane.showConfirmDialog(null, "That window is already open.", "Already open!", JOptionPane.DEFAULT_OPTION);
             return;
         }
 
-        parseJFrame(name, prevGUI, f-> mainPanel(f, minAmount, rewards, prevGUI));
-    }
-
-    @Override
-    protected final void update(ConfigGUI prevGUI) {
-        HavokRewards havokRewards = new HavokRewards(allowTargetViaNoteCheckBox.isSelected(), targetAllPlayersCheckBox.isSelected(), Integer.valueOf(delayTextField.getValue().toString()), nameTextField.getText(), ((SortedListModel<Double>) tierTriggers.getModel()).getElements(), ((HavokBlockTableModel) blocksTable.getModel()).getElements(), ((HavokCommandTableModel) commandsTable.getModel()).getElements(), ((HavokEntityTableModel) entitiesTable.getModel()).getElements(), ((HavokItemStackTableModel) itemsTable.getModel()).getElements(), ((HavokMessageTableModel) messagesTable.getModel()).getElements(), ((HavokParticleTableModel) particlesTable.getModel()).getElements(), ((HavokSoundTableModel) soundsTable.getModel()).getElements(), ((SortedListModel<String>) targetPlayers.getModel()).getElements());
-        JTable rewards = prevGUI.rewardsTable;
-        ((HavokRewardsTableModel) rewards.getModel()).addReward(Double.parseDouble(minAmountTextField.getValue().toString()), havokRewards);
-    }
-
-    private JPanel targetPlayers(HavokRewards rewards) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        targetPlayers = new JList<>(new SortedListModel<>(rewards.getTargetPlayers(), String::compareTo));
-        panel.add(new JScrollPane(targetPlayers), gbc(0, 0));
-        panel.add(flowLayoutPanel(buttonPanel(l -> ((SortedListModel<String>) targetPlayers.getModel()).addElement(JOptionPane.showInputDialog("Enter target player's name.", "")), l -> {
-            SortedListModel<String> model = (SortedListModel<String>) targetPlayers.getModel();
-            Arrays.stream(targetPlayers.getSelectedIndices()).forEach(model::remove);
-        })), gbc(0, 1));
-        return panel;
+        parseJFrame(name, prevGUI, f -> mainPanel(f, minAmount, rewards, prevGUI));
     }
 
     private JPanel buttonPanel(ActionListener addObject, ActionListener removeObject) {
@@ -111,23 +95,17 @@ public class RewardsGUI extends BaseGUI<ConfigGUI> {
         return panel;
     }
 
-    private JPanel triggerTiers(HavokRewards rewards) {
-        JPanel panel = gridBagLayoutPanel();
-        tierTriggers = new JList<>(new SortedListModel<>(rewards.getTriggerTiers(), Double::compareTo));
-        panel.add(new JScrollPane(tierTriggers), gbc(0, 0));
-        panel.add(flowLayoutPanel(buttonPanel(l -> {
-            String string = JOptionPane.showInputDialog("Enter a reward tier. (Remember to be exact!)");
-            try {
-                double d = Double.valueOf(string);
-                ((SortedListModel<Double>) tierTriggers.getModel()).addElement(d);
-            }
-            catch (NumberFormatException e) {
-                JOptionPane.showConfirmDialog(null, string + " is not a valid input.");
-            }
-        }, l -> {
-            SortedListModel<Double> model = (SortedListModel<Double>) tierTriggers.getModel();
-            Arrays.stream(tierTriggers.getSelectedIndices()).forEach(model::remove);
-        })), gbc(0, 1));
+    private JPanel mainButtonPanel(JFrame frame, ConfigGUI prevGUI) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        JButton saveButton = parseJButton("Save", l -> {
+            update(prevGUI);
+            frame.dispose();
+        });
+        saveButton.setPreferredSize(new Dimension(195, 26));
+        panel.add(flowLayoutPanel(saveButton), gbc(0, 0));
+        JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
+        cancelButton.setPreferredSize(new Dimension(195, 26));
+        panel.add(flowLayoutPanel(cancelButton), gbc(1, 0));
         return panel;
     }
 
@@ -164,17 +142,46 @@ public class RewardsGUI extends BaseGUI<ConfigGUI> {
         return panel;
     }
 
-    private JPanel mainButtonPanel(JFrame frame, ConfigGUI prevGUI) {
+    private JPanel targetPlayers(HavokRewards rewards) {
         JPanel panel = new JPanel(new GridBagLayout());
-        JButton saveButton = parseJButton("Save", l -> {
-            update(prevGUI);
-            frame.dispose();
-        });
-        saveButton.setPreferredSize(new Dimension(195, 26));
-        panel.add(flowLayoutPanel(saveButton), gbc(0, 0));
-        JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
-        cancelButton.setPreferredSize(new Dimension(195, 26));
-        panel.add(flowLayoutPanel(cancelButton), gbc(1, 0));
+        targetPlayers = new JList<>(new SortedListModel<>(rewards.getTargetPlayers(), String::compareTo));
+        panel.add(new JScrollPane(targetPlayers), gbc(0, 0));
+        panel.add(flowLayoutPanel(buttonPanel(l -> ((SortedListModel<String>) targetPlayers.getModel()).addElement(JOptionPane.showInputDialog("Enter target player's name.", "")), l -> {
+            SortedListModel<String> model = (SortedListModel<String>) targetPlayers.getModel();
+            Arrays.stream(targetPlayers.getSelectedIndices()).forEach(model::remove);
+        })), gbc(0, 1));
         return panel;
+    }
+
+    private JPanel triggerTiers(HavokRewards rewards) {
+        JPanel panel = gridBagLayoutPanel();
+        tierTriggers = new JList<>(new SortedListModel<>(rewards.getTriggerTiers(), Double::compareTo));
+        panel.add(new JScrollPane(tierTriggers), gbc(0, 0));
+        panel.add(flowLayoutPanel(buttonPanel(l -> {
+            String string = JOptionPane.showInputDialog("Enter a reward tier. (Remember to be exact!)");
+            try {
+                double d = Double.valueOf(string);
+                ((SortedListModel<Double>) tierTriggers.getModel()).addElement(d);
+            }
+            catch (NumberFormatException e) {
+                JOptionPane.showConfirmDialog(null, string + " is not a valid input.");
+            }
+        }, l -> {
+            SortedListModel<Double> model = (SortedListModel<Double>) tierTriggers.getModel();
+            Arrays.stream(tierTriggers.getSelectedIndices()).forEach(model::remove);
+        })), gbc(0, 1));
+        return panel;
+    }
+
+    @Override
+    protected final void update(ConfigGUI prevGUI) {
+        HavokRewards havokRewards = new HavokRewards(allowTargetViaNoteCheckBox.isSelected(), targetAllPlayersCheckBox.isSelected(), Integer.valueOf(delayTextField.getValue().toString()), nameTextField.getText(), ((SortedListModel<Double>) tierTriggers.getModel()).getElements(), ((HavokBlockTableModel) blocksTable.getModel()).getElements(), ((HavokCommandTableModel) commandsTable.getModel()).getElements(), ((HavokEntityTableModel) entitiesTable.getModel()).getElements(), ((HavokItemStackTableModel) itemsTable.getModel()).getElements(), ((HavokMessageTableModel) messagesTable.getModel()).getElements(), ((HavokParticleTableModel) particlesTable.getModel()).getElements(), ((HavokSoundTableModel) soundsTable.getModel()).getElements(), ((SortedListModel<String>) targetPlayers.getModel()).getElements());
+        JTable rewards = prevGUI.rewards;
+        HavokRewardsTableModel model = (HavokRewardsTableModel) rewards.getModel();
+        if (index > -1) {
+            model.remove(index);
+        }
+
+        model.addReward(Double.parseDouble(minAmountTextField.getValue().toString()), havokRewards);
     }
 }

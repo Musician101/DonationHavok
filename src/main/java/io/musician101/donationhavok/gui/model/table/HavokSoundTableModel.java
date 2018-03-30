@@ -1,6 +1,6 @@
 package io.musician101.donationhavok.gui.model.table;
 
-import io.musician101.donationhavok.havok.HavokSound;
+import io.musician101.donationhavok.handler.havok.HavokSound;
 import java.util.List;
 import net.minecraft.util.ResourceLocation;
 

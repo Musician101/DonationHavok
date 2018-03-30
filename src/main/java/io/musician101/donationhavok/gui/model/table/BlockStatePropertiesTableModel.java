@@ -75,6 +75,63 @@ public class BlockStatePropertiesTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
+    @Override
+    public int getColumnCount() {
+        return 2;
+    }
+
+    @Override
+    public String getColumnName(int column) {
+        switch (column) {
+            case 0:
+                return "Name";
+            case 1:
+                return "Value";
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public int getRowCount() {
+        return blockState.getProperties().size();
+    }
+
+    @SuppressWarnings("unchecked")
+    @Override
+    public Object getValueAt(int rowIndex, int columnIndex) {
+        IProperty key = new ArrayList<>(blockState.getPropertyKeys()).get(rowIndex);
+        switch (columnIndex) {
+            case 0:
+                return key.getName();
+            case 1:
+                if (key instanceof PropertyInteger) {
+                    return blockState.getValue((PropertyInteger) key);
+                }
+                else if (key instanceof PropertyBool) {
+                    return blockState.getValue((PropertyBool) key);
+                }
+                else if (key instanceof PropertyEnum) {
+                    return ((IStringSerializable) blockState.getValue(key)).getName();
+                }
+            default:
+                return null;
+        }
+    }
+
+    @Override
+    public boolean isCellEditable(int rowIndex, int columnIndex) {
+        if (columnIndex == 1) {
+            return true;
+        }
+
+        return super.isCellEditable(rowIndex, columnIndex);
+    }
+
+    private <P extends PropertyEnum<T>, T extends Enum<T> & IStringSerializable> void parseEnum(P property, String valueName) {
+        property.getAllowedValues().stream().filter(value -> valueName.equals(value.getName())).findFirst().ifPresent(value -> blockState = blockState.withProperty(property, value));
+    }
+
     @SuppressWarnings("unchecked")
     @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
@@ -147,9 +204,6 @@ public class BlockStatePropertiesTableModel extends AbstractTableModel {
                 }
                 else if (key == BlockOldLog.VARIANT) {
                     parseEnum(BlockOldLog.VARIANT, name);
-                }
-                else if (key == BlockOldLeaf.VARIANT) {
-                    parseEnum(BlockOldLeaf.VARIANT, name);
                 }
                 else if (key == BlockOldLeaf.VARIANT) {
                     parseEnum(BlockOldLeaf.VARIANT, name);
@@ -260,61 +314,5 @@ public class BlockStatePropertiesTableModel extends AbstractTableModel {
 
             fireTableCellUpdated(rowIndex, columnIndex);
         }
-    }
-
-    private <P extends PropertyEnum<T>, T extends Enum<T> & IStringSerializable> void parseEnum(P property, String valueName) {
-        property.getAllowedValues().stream().filter(value -> valueName.equals(value.getName())).findFirst().ifPresent(value -> blockState = blockState.withProperty(property, value));
-    }
-
-    @Override
-    public Object getValueAt(int rowIndex, int columnIndex) {
-        IProperty key = new ArrayList<>(blockState.getPropertyKeys()).get(rowIndex);
-        switch (columnIndex) {
-            case 0:
-                return key.getName();
-            case 1:
-                if (key instanceof PropertyInteger) {
-                    return blockState.getValue((PropertyInteger) key);
-                }
-                else if (key instanceof PropertyBool) {
-                    return blockState.getValue((PropertyBool) key);
-                }
-                else if (key instanceof PropertyEnum) {
-                    return ((IStringSerializable) blockState.getValue(key)).getName();
-                }
-            default:
-                return null;
-        }
-    }
-
-    @Override
-    public String getColumnName(int column) {
-        switch (column) {
-            case 0:
-                return "Name";
-            case 1:
-                return "Value";
-            default:
-                return null;
-        }
-    }
-
-    @Override
-    public int getRowCount() {
-        return blockState.getProperties().size();
-    }
-
-    @Override
-    public int getColumnCount() {
-        return 2;
-    }
-
-    @Override
-    public boolean isCellEditable(int rowIndex, int columnIndex) {
-        if (columnIndex == 1) {
-            return true;
-        }
-
-        return super.isCellEditable(rowIndex, columnIndex);
     }
 }

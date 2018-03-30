@@ -8,8 +8,8 @@ import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 import javax.swing.JOptionPane;
 
-import static io.musician101.donationhavok.util.json.JsonUtils.BYTE;
-import static io.musician101.donationhavok.util.json.JsonUtils.INTEGER;
+import static io.musician101.donationhavok.util.json.Keys.BYTE;
+import static io.musician101.donationhavok.util.json.Keys.INTEGER;
 
 public class HavokMapTreeNode extends HavokBranchingTreeNode<JsonObject> {
 
@@ -25,7 +25,7 @@ public class HavokMapTreeNode extends HavokBranchingTreeNode<JsonObject> {
         this(null, json);
     }
 
-    public HavokMapTreeNode(@Nullable String key, @Nonnull JsonObject json) {
+    private HavokMapTreeNode(@Nullable String key, @Nonnull JsonObject json) {
         super(key, json);
     }
 

@@ -4,7 +4,11 @@ import com.google.gson.JsonObject;
 import io.musician101.donationhavok.DonationHavok;
 import io.musician101.donationhavok.gui.BaseGUI;
 import io.musician101.donationhavok.gui.ConfigGUI;
-import io.musician101.donationhavok.streamlabs.StreamLabsTracker;
+import io.musician101.donationhavok.handler.StreamLabsHandler;
+import io.musician101.donationhavok.handler.discovery.DiscoveryHandler;
+import io.musician101.donationhavok.handler.havok.HavokRewardsHandler;
+import io.musician101.donationhavok.handler.twitch.TwitchHandler;
+import io.musician101.donationhavok.util.json.Keys;
 import io.netty.buffer.ByteBuf;
 import java.io.IOException;
 import javax.annotation.Nonnull;
@@ -20,7 +24,7 @@ import net.minecraftforge.fml.common.network.simpleimpl.IMessageHandler;
 import net.minecraftforge.fml.common.network.simpleimpl.MessageContext;
 import net.minecraftforge.fml.relauncher.Side;
 
-import static io.musician101.donationhavok.util.json.JsonUtils.GSON;
+import static io.musician101.donationhavok.util.json.JsonKeyProcessor.GSON;
 
 public class JsonMessage implements IMessage {
 
@@ -50,20 +54,24 @@ public class JsonMessage implements IMessage {
         @SuppressWarnings("MethodCallSideOnly")
         @Override
         public IMessage onMessage(JsonMessage message, MessageContext ctx) {
-            StreamLabsTracker slt = GSON.fromJson(message.jsonObject, StreamLabsTracker.class);
+            DiscoveryHandler dh = Keys.DISCOVERY.deserializeFromParent(message.jsonObject).orElse(new DiscoveryHandler());
+            HavokRewardsHandler hrh = Keys.GENERAL.deserializeFromParent(message.jsonObject).orElse(new HavokRewardsHandler());
+            StreamLabsHandler slh = Keys.STREAM_LABS.deserializeFromParent(message.jsonObject).orElse(new StreamLabsHandler());
+            TwitchHandler th = Keys.TWITCH.deserializeFromParent(message.jsonObject).orElse(new TwitchHandler());
             if (ctx.side == Side.CLIENT) {
                 if (BaseGUI.isFrameActive("Donation Havok Configurator")) {
                     Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.CHAT, new TextComponentString("The configurator is already open.").setStyle(new Style().setColor(TextFormatting.RED)));
                 }
                 else {
-                    new ConfigGUI(slt, false);
+                    new ConfigGUI(dh, hrh, slh, th, false);
                 }
             }
             else {
                 DonationHavok instance = DonationHavok.INSTANCE;
                 EntityPlayerMP player = ctx.getServerHandler().player;
                 try {
-                    instance.saveConfig(slt);
+                    instance.saveConfig(dh, hrh, slh, th);
+                    DonationHavok.INSTANCE.getTwitchHandler().connect();
                     player.sendMessage(new TextComponentString("Config saved."));
                 }
                 catch (IOException e) {

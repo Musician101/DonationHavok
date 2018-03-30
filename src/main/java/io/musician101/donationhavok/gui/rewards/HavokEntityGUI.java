@@ -4,7 +4,8 @@ import io.musician101.donationhavok.gui.BaseGUI;
 import io.musician101.donationhavok.gui.model.SortedComboBoxModel;
 import io.musician101.donationhavok.gui.model.table.HavokEntityTableModel;
 import io.musician101.donationhavok.gui.tree.HavokMapTreeNode;
-import io.musician101.donationhavok.havok.HavokEntity;
+import io.musician101.donationhavok.handler.havok.HavokEntity;
+import io.musician101.donationhavok.util.json.Keys;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.text.DecimalFormat;
@@ -28,18 +29,17 @@ import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.util.ResourceLocation;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
-import static io.musician101.donationhavok.util.json.JsonUtils.GSON;
-import static io.musician101.donationhavok.util.json.JsonUtils.ID;
+import static io.musician101.donationhavok.util.json.JsonKeyProcessor.GSON;
 
 public class HavokEntityGUI extends BaseGUI<RewardsGUI> {
 
     private final int index;
-    private JComboBox<ResourceLocation> entityComboBox;
     private JFormattedTextField delayTextField;
+    private JComboBox<ResourceLocation> entityComboBox;
+    private JTree nbtTree;
     private JFormattedTextField xTextField;
     private JFormattedTextField yTextField;
     private JFormattedTextField zTextField;
-    private JTree nbtTree;
 
     public HavokEntityGUI(HavokEntity entity, int index, RewardsGUI prevGUI) {
         this.index = index;
@@ -49,29 +49,21 @@ public class HavokEntityGUI extends BaseGUI<RewardsGUI> {
             return;
         }
 
-        parseJFrame(name, prevGUI, f-> mainPanel(f, entity, prevGUI));
+        parseJFrame(name, prevGUI, f -> mainPanel(f, entity, prevGUI));
     }
 
-    @Override
-    protected void update(RewardsGUI prevGUI) {
-        JTable entities = prevGUI.entitiesTable;
-        HavokEntityTableModel model = (HavokEntityTableModel) entities.getModel();
-        NBTTagCompound nbt = GSON.fromJson(((HavokMapTreeNode) nbtTree.getModel().getRoot()).serialize(), NBTTagCompound.class);
-        nbt.setString(ID, entityComboBox.getSelectedItem().toString());
-        HavokEntity entity = new HavokEntity(Integer.valueOf(delayTextField.getValue().toString()), Double.valueOf(xTextField.getValue().toString()), Double.valueOf(yTextField.getValue().toString()), Double.valueOf(zTextField.getValue().toString()), nbt);
-        if (index == -1) {
-            model.add(entity);
-        }
-        else {
-            model.replace(index, entity);
-        }
-    }
-
-    private JPanel mainPanel(JFrame frame, HavokEntity entity, RewardsGUI prevGUI) {
+    private JPanel buttonPanel(JFrame frame, RewardsGUI prevGUI) {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(leftPanel(frame, entity, prevGUI), gbc(0, 0));
-        panel.add(rightPanel(entity), gbc(1, 0));
-        return panel;
+        JButton saveButton = parseJButton("Save", l -> {
+            update(prevGUI);
+            frame.dispose();
+        });
+        saveButton.setPreferredSize(new Dimension(195, 26));
+        panel.add(flowLayoutPanel(saveButton), gbc(0, 0));
+        JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
+        cancelButton.setPreferredSize(new Dimension(195, 26));
+        panel.add(flowLayoutPanel(cancelButton), gbc(1, 0));
+        return flowLayoutPanel(panel);
     }
 
     private JPanel leftPanel(JFrame frame, HavokEntity entity, RewardsGUI prevGUI) {
@@ -87,10 +79,10 @@ public class HavokEntityGUI extends BaseGUI<RewardsGUI> {
         entityComboBox.setSelectedItem(new ResourceLocation(entity.getNBTTagCompound().getString("id")));
         entityComboBox.addActionListener(l -> {
             Entity e = EntityList.createEntityByIDFromName((ResourceLocation) Objects.requireNonNull(entityComboBox.getSelectedItem()), FMLCommonHandler.instance().getMinecraftServerInstance().getEntityWorld());
-            e.readFromNBT(GSON.fromJson(((HavokMapTreeNode) nbtTree.getModel().getRoot()).serialize(), NBTTagCompound.class));
+            Objects.requireNonNull(e).readFromNBT(GSON.fromJson(((HavokMapTreeNode) nbtTree.getModel().getRoot()).serialize(), NBTTagCompound.class));
             DefaultTreeModel model = (DefaultTreeModel) nbtTree.getModel();
             NBTTagCompound nbt = e.writeToNBT(new NBTTagCompound());
-            nbt.removeTag(ID);
+            nbt.removeTag(Keys.ID.getKey());
             nbt.removeTag("UUID");
             nbt.removeTag("UUIDMost");
             nbt.removeTag("UUIDLeast");
@@ -101,18 +93,11 @@ public class HavokEntityGUI extends BaseGUI<RewardsGUI> {
         return flowLayoutPanel(panel);
     }
 
-    private JPanel buttonPanel(JFrame frame, RewardsGUI prevGUI) {
+    private JPanel mainPanel(JFrame frame, HavokEntity entity, RewardsGUI prevGUI) {
         JPanel panel = new JPanel(new GridBagLayout());
-        JButton saveButton = parseJButton("Save", l -> {
-            update(prevGUI);
-            frame.dispose();
-        });
-        saveButton.setPreferredSize(new Dimension(195, 26));
-        panel.add(flowLayoutPanel(saveButton), gbc(0, 0));
-        JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
-        cancelButton.setPreferredSize(new Dimension(195, 26));
-        panel.add(flowLayoutPanel(cancelButton), gbc(1, 0));
-        return flowLayoutPanel(panel);
+        panel.add(leftPanel(frame, entity, prevGUI), gbc(0, 0));
+        panel.add(rightPanel(entity), gbc(1, 0));
+        return panel;
     }
 
     private JPanel offsetPanel(HavokEntity entity) {
@@ -144,11 +129,26 @@ public class HavokEntityGUI extends BaseGUI<RewardsGUI> {
     private JPanel rightPanel(HavokEntity entity) {
         JPanel panel = new JPanel(new GridBagLayout());
         NBTTagCompound nbt = entity.getNBTTagCompound().copy();
-        nbt.removeTag(ID);
+        nbt.removeTag(Keys.ID.getKey());
         JsonPanel jsonPanel = new JsonPanel(nbt);
         nbtTree = jsonPanel.getTree();
         panel.add(parseJLabel("NBT_COMPOUND", SwingConstants.CENTER), gbc(0, 0));
         panel.add(jsonPanel.getScrollPane(), gbc(0, 1));
         return flowLayoutPanel(panel);
+    }
+
+    @Override
+    protected void update(RewardsGUI prevGUI) {
+        JTable entities = prevGUI.entitiesTable;
+        HavokEntityTableModel model = (HavokEntityTableModel) entities.getModel();
+        NBTTagCompound nbt = GSON.fromJson(((HavokMapTreeNode) nbtTree.getModel().getRoot()).serialize(), NBTTagCompound.class);
+        nbt.setString(Keys.ID.getKey(), entityComboBox.getSelectedItem().toString());
+        HavokEntity entity = new HavokEntity(Integer.valueOf(delayTextField.getValue().toString()), Double.valueOf(xTextField.getValue().toString()), Double.valueOf(yTextField.getValue().toString()), Double.valueOf(zTextField.getValue().toString()), nbt);
+        if (index == -1) {
+            model.add(entity);
+        }
+        else {
+            model.replace(index, entity);
+        }
     }
 }

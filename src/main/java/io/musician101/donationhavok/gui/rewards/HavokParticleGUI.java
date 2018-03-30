@@ -3,7 +3,7 @@ package io.musician101.donationhavok.gui.rewards;
 import io.musician101.donationhavok.gui.BaseGUI;
 import io.musician101.donationhavok.gui.model.SortedComboBoxModel;
 import io.musician101.donationhavok.gui.model.table.HavokParticleTableModel;
-import io.musician101.donationhavok.havok.HavokParticle;
+import io.musician101.donationhavok.handler.havok.HavokParticle;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
@@ -27,13 +27,13 @@ import net.minecraft.util.EnumParticleTypes;
 public class HavokParticleGUI extends BaseGUI<RewardsGUI> {
 
     private final int index;
-    private JComboBox<EnumParticleTypes> particleComboBox;
     private JFormattedTextField delayTextField;
+    private JComboBox<EnumParticleTypes> particleComboBox;
     private JFormattedTextField xTextField;
-    private JFormattedTextField yTextField;
-    private JFormattedTextField zTextField;
     private JFormattedTextField xVelocityTextField;
+    private JFormattedTextField yTextField;
     private JFormattedTextField yVelocityTextField;
+    private JFormattedTextField zTextField;
     private JFormattedTextField zVelocityTextField;
 
     public HavokParticleGUI(HavokParticle particle, int index, RewardsGUI prevGUI) {
@@ -47,17 +47,28 @@ public class HavokParticleGUI extends BaseGUI<RewardsGUI> {
         parseJFrame(name, prevGUI, f -> mainPanel(f, particle, prevGUI));
     }
 
-    @Override
-    protected void update(RewardsGUI prevGUI) {
-        JTable particlesTable = prevGUI.particlesTable;
-        HavokParticleTableModel model = (HavokParticleTableModel) particlesTable.getModel();
-        HavokParticle havokParticle = new HavokParticle(Integer.valueOf(delayTextField.getValue().toString()), Double.valueOf(xTextField.getValue().toString()), Double.valueOf(yTextField.getValue().toString()), Double.valueOf(zTextField.getValue().toString()), Double.valueOf(xVelocityTextField.getValue().toString()), Double.valueOf(yVelocityTextField.getValue().toString()), Double.valueOf(zVelocityTextField.getValue().toString()), (EnumParticleTypes) particleComboBox.getSelectedItem());
-        if (index == -1) {
-            model.add(havokParticle);
-        }
-        else {
-            model.replace(index, havokParticle);
-        }
+    private JPanel buttons(JFrame frame, RewardsGUI prevGUI) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        JButton saveButton = parseJButton("Save", l -> {
+            update(prevGUI);
+            frame.dispose();
+        });
+        saveButton.setPreferredSize(new Dimension(195, 26));
+        panel.add(flowLayoutPanel(saveButton), gbc(0, 0));
+        JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
+        cancelButton.setPreferredSize(new Dimension(195, 26));
+        panel.add(flowLayoutPanel(cancelButton), gbc(1, 0));
+        return panel;
+    }
+
+    private JPanel delayPanel(HavokParticle particle) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.add(parseJLabel("Delay: ", SwingConstants.LEFT), gbc(0, 0));
+        delayTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
+        delayTextField.setValue(particle.getDelay());
+        delayTextField.setPreferredSize(new Dimension(100, delayTextField.getPreferredSize().height));
+        panel.add(flowLayoutPanel(delayTextField), gbc(1, 0));
+        return flowLayoutPanel(panel);
     }
 
     private JPanel mainPanel(JFrame frame, HavokParticle particle, RewardsGUI prevGUI) {
@@ -68,23 +79,6 @@ public class HavokParticleGUI extends BaseGUI<RewardsGUI> {
         panel.add(parseJLabel("Velocity", SwingConstants.CENTER), gbc(0, 3));
         panel.add(velocityPanel(particle), gbc(0, 4));
         panel.add(buttons(frame, prevGUI), gbc(0, 5));
-        return flowLayoutPanel(panel);
-    }
-
-    private JPanel topPanel(HavokParticle particle) {
-        JPanel panel = gridBagLayoutPanel();
-        panel.add(delayPanel(particle), gbc(0, 0));
-        panel.add(particlePanel(particle), gbc(1, 0));
-        return flowLayoutPanel(panel);
-    }
-
-    private JPanel delayPanel(HavokParticle particle) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(parseJLabel("Delay: ", SwingConstants.LEFT), gbc(0, 0));
-        delayTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
-        delayTextField.setValue(particle.getDelay());
-        delayTextField.setPreferredSize(new Dimension(100, delayTextField.getPreferredSize().height));
-        panel.add(flowLayoutPanel(delayTextField), gbc(1, 0));
         return flowLayoutPanel(panel);
     }
 
@@ -114,6 +108,44 @@ public class HavokParticleGUI extends BaseGUI<RewardsGUI> {
         return flowLayoutPanel(panel);
     }
 
+    private JPanel particlePanel(HavokParticle particle) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.add(parseJLabel("Particle: ", SwingConstants.CENTER), gbc(0, 0));
+        particleComboBox = new JComboBox<>(new SortedComboBoxModel<>(Arrays.asList(EnumParticleTypes.values()), Comparator.comparing(EnumParticleTypes::getParticleName)));
+        particleComboBox.setSelectedItem(particle.getParticle());
+        particleComboBox.setRenderer(new DefaultListCellRenderer() {
+
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                label.setText(((EnumParticleTypes) value).getParticleName());
+                return label;
+            }
+        });
+        panel.add(particleComboBox, gbc(1, 0));
+        return panel;
+    }
+
+    private JPanel topPanel(HavokParticle particle) {
+        JPanel panel = gridBagLayoutPanel();
+        panel.add(delayPanel(particle), gbc(0, 0));
+        panel.add(particlePanel(particle), gbc(1, 0));
+        return flowLayoutPanel(panel);
+    }
+
+    @Override
+    protected void update(RewardsGUI prevGUI) {
+        JTable particlesTable = prevGUI.particlesTable;
+        HavokParticleTableModel model = (HavokParticleTableModel) particlesTable.getModel();
+        HavokParticle havokParticle = new HavokParticle(Integer.valueOf(delayTextField.getValue().toString()), Double.valueOf(xTextField.getValue().toString()), Double.valueOf(yTextField.getValue().toString()), Double.valueOf(zTextField.getValue().toString()), Double.valueOf(xVelocityTextField.getValue().toString()), Double.valueOf(yVelocityTextField.getValue().toString()), Double.valueOf(zVelocityTextField.getValue().toString()), (EnumParticleTypes) particleComboBox.getSelectedItem());
+        if (index == -1) {
+            model.add(havokParticle);
+        }
+        else {
+            model.replace(index, havokParticle);
+        }
+    }
+
     private JPanel velocityPanel(HavokParticle entity) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.add(flowLayoutPanel(parseJLabel("X:", SwingConstants.LEFT)), gbc(0, 0));
@@ -138,37 +170,5 @@ public class HavokParticleGUI extends BaseGUI<RewardsGUI> {
         zVelocityTextField.setPreferredSize(zDim);
         panel.add(zVelocityTextField, gbc(5, 0));
         return flowLayoutPanel(panel);
-    }
-
-    private JPanel particlePanel(HavokParticle particle) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(parseJLabel("Particle: ", SwingConstants.CENTER), gbc(0, 0));
-        particleComboBox = new JComboBox<>(new SortedComboBoxModel<>(Arrays.asList(EnumParticleTypes.values()), Comparator.comparing(EnumParticleTypes::getParticleName)));
-        particleComboBox.setSelectedItem(particle.getParticle());
-        particleComboBox.setRenderer(new DefaultListCellRenderer() {
-
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                label.setText(((EnumParticleTypes) value).getParticleName());
-                return label;
-            }
-        });
-        panel.add(particleComboBox, gbc(1, 0));
-        return panel;
-    }
-
-    private JPanel buttons(JFrame frame, RewardsGUI prevGUI) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        JButton saveButton = parseJButton("Save", l -> {
-            update(prevGUI);
-            frame.dispose();
-        });
-        saveButton.setPreferredSize(new Dimension(195, 26));
-        panel.add(flowLayoutPanel(saveButton), gbc(0, 0));
-        JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
-        cancelButton.setPreferredSize(new Dimension(195, 26));
-        panel.add(flowLayoutPanel(cancelButton), gbc(1, 0));
-        return panel;
     }
 }

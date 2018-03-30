@@ -1,6 +1,6 @@
 package io.musician101.donationhavok.gui.model.table;
 
-import io.musician101.donationhavok.havok.HavokCommand;
+import io.musician101.donationhavok.handler.havok.HavokCommand;
 import java.util.List;
 
 public class HavokCommandTableModel extends ListTableModel<HavokCommand> {

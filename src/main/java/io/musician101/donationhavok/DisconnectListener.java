@@ -8,7 +8,7 @@ import net.minecraftforge.fml.common.network.FMLNetworkEvent.ClientDisconnection
 public class DisconnectListener {
 
     @SubscribeEvent
-    public void test(ClientDisconnectionFromServerEvent event) {
+    public void disconnect(ClientDisconnectionFromServerEvent event) {
         Arrays.stream(Frame.getFrames()).forEach(Frame::dispose);
     }
 }

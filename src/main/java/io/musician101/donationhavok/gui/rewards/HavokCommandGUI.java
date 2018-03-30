@@ -2,7 +2,7 @@ package io.musician101.donationhavok.gui.rewards;
 
 import io.musician101.donationhavok.gui.BaseGUI;
 import io.musician101.donationhavok.gui.model.table.HavokCommandTableModel;
-import io.musician101.donationhavok.havok.HavokCommand;
+import io.musician101.donationhavok.handler.havok.HavokCommand;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.text.NumberFormat;
@@ -18,8 +18,8 @@ import javax.swing.SwingConstants;
 public class HavokCommandGUI extends BaseGUI<RewardsGUI> {
 
     private final int index;
-    private JFormattedTextField delayTextField;
     private JTextField commandTextField;
+    private JFormattedTextField delayTextField;
 
     public HavokCommandGUI(HavokCommand command, int index, RewardsGUI prevGUI) {
         this.index = index;
@@ -30,19 +30,6 @@ public class HavokCommandGUI extends BaseGUI<RewardsGUI> {
         }
 
         parseJFrame(name, prevGUI, f -> mainPanel(f, command, prevGUI));
-    }
-
-    @Override
-    protected void update(RewardsGUI prevGUI) {
-        JTable commands = prevGUI.commandsTable;
-        HavokCommandTableModel model = (HavokCommandTableModel) commands.getModel();
-        HavokCommand havokCommand = new HavokCommand(Integer.valueOf(delayTextField.getValue().toString()), commandTextField.getText());
-        if (index == -1) {
-            model.add(havokCommand);
-        }
-        else {
-            model.replace(index, havokCommand);
-        }
     }
 
     private JPanel mainPanel(JFrame frame, HavokCommand command, RewardsGUI prevGUI) {
@@ -64,5 +51,18 @@ public class HavokCommandGUI extends BaseGUI<RewardsGUI> {
         cancelButton.setPreferredSize(new Dimension(195, 26));
         panel.add(flowLayoutPanel(cancelButton), gbc(0, 5));
         return flowLayoutPanel(panel);
+    }
+
+    @Override
+    protected void update(RewardsGUI prevGUI) {
+        JTable commands = prevGUI.commandsTable;
+        HavokCommandTableModel model = (HavokCommandTableModel) commands.getModel();
+        HavokCommand havokCommand = new HavokCommand(Integer.valueOf(delayTextField.getValue().toString()), commandTextField.getText());
+        if (index == -1) {
+            model.add(havokCommand);
+        }
+        else {
+            model.replace(index, havokCommand);
+        }
     }
 }

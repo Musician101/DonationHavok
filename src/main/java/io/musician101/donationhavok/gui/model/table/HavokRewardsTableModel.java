@@ -1,6 +1,6 @@
 package io.musician101.donationhavok.gui.model.table;
 
-import io.musician101.donationhavok.havok.HavokRewards;
+import io.musician101.donationhavok.handler.havok.HavokRewards;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -22,6 +22,31 @@ public class HavokRewardsTableModel extends AbstractTableModel {
         fireTableDataChanged();
     }
 
+    @Override
+    public int getColumnCount() {
+        return 4;
+    }
+
+    @Override
+    public String getColumnName(int column) {
+        switch (column) {
+            case 0:
+                return "Name";
+            case 1:
+                return "Min. Amount";
+            case 2:
+                return "Delay";
+            case 3:
+                return "Parts";
+            default:
+                return null;
+        }
+    }
+
+    public double getMinAmountAt(int rowIndex) {
+        return new ArrayList<>(rewards.keySet()).get(rowIndex);
+    }
+
     public Map<Double, HavokRewards> getRewards() {
         return rewards;
     }
@@ -30,23 +55,9 @@ public class HavokRewardsTableModel extends AbstractTableModel {
         return new ArrayList<>(rewards.values()).get(rowIndex);
     }
 
-    public double getMinAmountAt(int rowIndex) {
-        return new ArrayList<>(rewards.keySet()).get(rowIndex);
-    }
-
-    public void remove(int rowIndex) {
-        rewards.remove(getMinAmountAt(rowIndex));
-        fireTableDataChanged();
-    }
-
     @Override
     public int getRowCount() {
         return rewards.size();
-    }
-
-    @Override
-    public int getColumnCount() {
-        return 4;
     }
 
     @Override
@@ -103,26 +114,15 @@ public class HavokRewardsTableModel extends AbstractTableModel {
                     return StringUtils.join(parts, ", ");
             }
         }
-        catch (IndexOutOfBoundsException e) {
-            //NOOP
+        catch (IndexOutOfBoundsException ignored) {
+
         }
 
         return null;
     }
 
-    @Override
-    public String getColumnName(int column) {
-        switch (column) {
-            case 0:
-                return "Name";
-            case 1:
-                return "Min. Amount";
-            case 2:
-                return "Delay";
-            case 3:
-                return "Parts";
-            default:
-                return null;
-        }
+    public void remove(int rowIndex) {
+        rewards.remove(getMinAmountAt(rowIndex));
+        fireTableDataChanged();
     }
 }

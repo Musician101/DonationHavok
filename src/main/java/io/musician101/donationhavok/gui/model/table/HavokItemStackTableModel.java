@@ -1,7 +1,8 @@
 package io.musician101.donationhavok.gui.model.table;
 
-import io.musician101.donationhavok.havok.HavokItemStack;
+import io.musician101.donationhavok.handler.havok.HavokItemStack;
 import java.util.List;
+import java.util.Objects;
 import net.minecraft.item.Item;
 import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
@@ -21,7 +22,7 @@ public class HavokItemStackTableModel extends ListTableModel<HavokItemStack> {
             case 0:
                 return havokItemStack.getDelay();
             case 1:
-                return Item.REGISTRY.getNameForObject(itemStack.getItem()).toString();
+                return Objects.requireNonNull(Item.REGISTRY.getNameForObject(itemStack.getItem())).toString();
             case 2:
                 return itemStack.getCount();
             case 3:

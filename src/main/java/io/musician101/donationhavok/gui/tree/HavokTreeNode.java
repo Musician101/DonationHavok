@@ -10,12 +10,17 @@ import javax.swing.tree.TreeNode;
 
 public abstract class HavokTreeNode<J extends JsonElement> implements MutableTreeNode {
 
-    private MutableTreeNode parent;
     @Nullable
     private String key;
+    private MutableTreeNode parent;
 
-    public HavokTreeNode(@Nullable String key) {
+    HavokTreeNode(@Nullable String key) {
         this.key = key;
+    }
+
+    @Override
+    public Enumeration children() {
+        return Collections.emptyEnumeration();
     }
 
     @Override
@@ -33,9 +38,18 @@ public abstract class HavokTreeNode<J extends JsonElement> implements MutableTre
         return 0;
     }
 
+    @Override
+    public int getIndex(TreeNode node) {
+        return -1;
+    }
+
     @Nullable
     public String getKey() {
         return key;
+    }
+
+    public void setKey(@Nullable String key) {
+        this.key = key;
     }
 
     @Override
@@ -44,23 +58,18 @@ public abstract class HavokTreeNode<J extends JsonElement> implements MutableTre
     }
 
     @Override
-    public int getIndex(TreeNode node) {
-        return -1;
-    }
-
-    @Override
-    public boolean isLeaf() {
-        return getChildCount() == 0;
-    }
-
-    @Override
-    public Enumeration children() {
-        return Collections.emptyEnumeration();
+    public void setParent(MutableTreeNode newParent) {
+        this.parent = newParent;
     }
 
     @Override
     public void insert(MutableTreeNode child, int index) {
 
+    }
+
+    @Override
+    public boolean isLeaf() {
+        return getChildCount() == 0;
     }
 
     @Override
@@ -73,15 +82,6 @@ public abstract class HavokTreeNode<J extends JsonElement> implements MutableTre
 
     }
 
-    public void setKey(@Nullable String key) {
-        this.key = key;
-    }
-
-    @Override
-    public void setUserObject(Object object) {
-
-    }
-
     @Override
     public void removeFromParent() {
         if (parent != null) {
@@ -89,11 +89,11 @@ public abstract class HavokTreeNode<J extends JsonElement> implements MutableTre
         }
     }
 
-    @Override
-    public void setParent(MutableTreeNode newParent) {
-        this.parent = newParent;
-    }
-
     @Nonnull
-    public abstract J serialize();
+    protected abstract J serialize();
+
+    @Override
+    public void setUserObject(Object object) {
+
+    }
 }

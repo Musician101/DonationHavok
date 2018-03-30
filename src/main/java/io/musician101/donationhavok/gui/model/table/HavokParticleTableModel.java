@@ -1,6 +1,6 @@
 package io.musician101.donationhavok.gui.model.table;
 
-import io.musician101.donationhavok.havok.HavokParticle;
+import io.musician101.donationhavok.handler.havok.HavokParticle;
 import java.util.List;
 
 public class HavokParticleTableModel extends ListTableModel<HavokParticle> {

@@ -12,14 +12,46 @@ import javax.swing.tree.TreeNode;
 
 public abstract class HavokBranchingTreeNode<J extends JsonElement> extends HavokTreeNode<J> {
 
-    protected final List<TreeNode> children = new ArrayList<>();
+    final List<TreeNode> children = new ArrayList<>();
 
-    public HavokBranchingTreeNode(@Nullable String key, @Nonnull J json) {
+    HavokBranchingTreeNode(@Nullable String key, @Nonnull J json) {
         super(key);
         parseJson(json);
     }
 
-    protected abstract void parseJson(J json);
+    public void add(@Nonnull MutableTreeNode child) {
+        MutableTreeNode oldParent = (MutableTreeNode) child.getParent();
+        if (oldParent != null) {
+            oldParent.remove(child);
+        }
+
+        child.setParent(this);
+        children.add(child);
+    }
+
+    @Override
+    public Enumeration children() {
+        return new Enumeration<TreeNode>() {
+
+            int count = 0;
+
+            @Override
+            public boolean hasMoreElements() {
+                return count < children.size();
+            }
+
+            @Override
+            public TreeNode nextElement() {
+                synchronized (HavokBranchingTreeNode.this) {
+                    if (hasMoreElements()) {
+                        return getChildAt(count++);
+                    }
+                }
+
+                throw new NoSuchElementException("HavokTreeNode Enumeration");
+            }
+        };
+    }
 
     @Override
     public boolean getAllowsChildren() {
@@ -46,39 +78,6 @@ public abstract class HavokBranchingTreeNode<J extends JsonElement> extends Havo
     }
 
     @Override
-    public Enumeration children() {
-        return new Enumeration<TreeNode>() {
-            int count = 0;
-
-            @Override
-            public boolean hasMoreElements() {
-                return count < children.size();
-            }
-
-            @Override
-            public TreeNode nextElement() {
-                synchronized (HavokBranchingTreeNode.this) {
-                    if (hasMoreElements()) {
-                        return getChildAt(count++);
-                    }
-                }
-
-                throw new NoSuchElementException("HavokTreeNode Enumeration");
-            }
-        };
-    }
-
-    public void add(@Nonnull MutableTreeNode child) {
-        MutableTreeNode oldParent = (MutableTreeNode) child.getParent();
-        if (oldParent != null) {
-            oldParent.remove(child);
-        }
-
-        child.setParent(this);
-        children.add(child);
-    }
-
-    @Override
     public void insert(@Nonnull MutableTreeNode child, int index) {
         MutableTreeNode oldParent = (MutableTreeNode) child.getParent();
         if (oldParent != null) {
@@ -88,6 +87,8 @@ public abstract class HavokBranchingTreeNode<J extends JsonElement> extends Havo
         child.setParent(this);
         children.add(index, child);
     }
+
+    protected abstract void parseJson(J json);
 
     @Override
     public void remove(int index) {

@@ -2,14 +2,18 @@ package io.musician101.donationhavok.scheduler;
 
 final class HavokTask {
 
-    private int delayLeft;
-    private final Runnable runnable;
     private final String name;
+    private final Runnable runnable;
+    private int delayLeft;
 
     public HavokTask(String name, int delay, Runnable runnable) {
         this.name = name;
         this.delayLeft = delay;
         this.runnable = runnable;
+    }
+
+    public int getDelayLeft() {
+        return delayLeft;
     }
 
     public String getName() {
@@ -21,9 +25,5 @@ final class HavokTask {
             runnable.run();
         }
         delayLeft--;
-    }
-
-    public int getDelayLeft() {
-        return delayLeft;
     }
 }

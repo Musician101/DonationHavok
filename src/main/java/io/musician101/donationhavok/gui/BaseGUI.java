@@ -25,9 +25,35 @@ import javax.swing.table.TableModel;
 
 public abstract class BaseGUI<G extends BaseGUI> {
 
-    protected abstract void update(G prevGUI);
+    public static boolean isFrameActive(String name) {
+        return Arrays.stream(Frame.getFrames()).anyMatch(frame -> frame.getTitle().equals(name) && frame.isVisible());
+    }
 
-    protected final JFrame parseJFrame(String name, G prevGUI, Function<JFrame, JPanel> panel) {
+    protected final JPanel flowLayoutPanel(JComponent component) {
+        JPanel panel = new JPanel(new FlowLayout());
+        panel.add(component);
+        return panel;
+    }
+
+    protected final GridBagConstraints gbc(int x, int y) {
+        GridBagConstraints gbc = new GridBagConstraints();
+        gbc.gridx = x;
+        gbc.gridy = y;
+        gbc.fill = GridBagConstraints.BOTH;
+        return gbc;
+    }
+
+    protected final JPanel gridBagLayoutPanel() {
+        return new JPanel(new GridBagLayout());
+    }
+
+    protected final JButton parseJButton(String name, ActionListener l) {
+        JButton button = new JButton(name);
+        button.addActionListener(l);
+        return button;
+    }
+
+    protected final void parseJFrame(String name, G prevGUI, Function<JFrame, JPanel> panel) {
         JFrame frame = new JFrame(name);
         frame.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
         frame.setResizable(false);
@@ -53,13 +79,13 @@ public abstract class BaseGUI<G extends BaseGUI> {
         frame.setContentPane(panel.apply(frame));
         frame.pack();
         frame.setVisible(true);
-        return frame;
     }
 
-    protected final JButton parseJButton(String name, ActionListener l) {
-        JButton button = new JButton(name);
-        button.addActionListener(l);
-        return button;
+    protected final JLabel parseJLabel(String text, int horizontalAlignment) {
+        JLabel jLabel = new JLabel(text);
+        jLabel.setHorizontalAlignment(horizontalAlignment);
+        jLabel.setVerticalAlignment(SwingConstants.CENTER);
+        return jLabel;
     }
 
     protected final JTable parseJTable(TableModel model, MouseAdapter mouseAdapter) {
@@ -67,9 +93,7 @@ public abstract class BaseGUI<G extends BaseGUI> {
         table.setAutoCreateRowSorter(false);
         table.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
         table.addMouseListener(mouseAdapter);
-        model.addTableModelListener(l -> {
-            resizeTable(table);
-        });
+        model.addTableModelListener(l -> resizeTable(table));
         resizeTable(table);
         return table;
     }
@@ -89,32 +113,5 @@ public abstract class BaseGUI<G extends BaseGUI> {
         }
     }
 
-    protected final GridBagConstraints gbc(int x, int y) {
-        GridBagConstraints gbc = new GridBagConstraints();
-        gbc.gridx = x;
-        gbc.gridy = y;
-        gbc.fill = GridBagConstraints.BOTH;
-        return gbc;
-    }
-
-    protected final JPanel flowLayoutPanel(JComponent component) {
-        JPanel panel = new JPanel(new FlowLayout());
-        panel.add(component);
-        return panel;
-    }
-
-    protected final JPanel gridBagLayoutPanel() {
-        return new JPanel(new GridBagLayout());
-    }
-
-    protected final JLabel parseJLabel(String text, int horizontalAlignment) {
-        JLabel jLabel = new JLabel(text);
-        jLabel.setHorizontalAlignment(horizontalAlignment);
-        jLabel.setVerticalAlignment(SwingConstants.CENTER);
-        return jLabel;
-    }
-
-    public static boolean isFrameActive(String name) {
-        return Arrays.stream(Frame.getFrames()).anyMatch(frame -> frame.getTitle().equals(name) && frame.isVisible());
-    }
+    protected abstract void update(G prevGUI);
 }

@@ -3,13 +3,14 @@ package io.musician101.donationhavok.gui.rewards;
 import io.musician101.donationhavok.gui.BaseGUI;
 import io.musician101.donationhavok.gui.model.SortedComboBoxModel;
 import io.musician101.donationhavok.gui.model.table.HavokSoundTableModel;
-import io.musician101.donationhavok.havok.HavokSound;
+import io.musician101.donationhavok.handler.havok.HavokSound;
 import java.awt.Component;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
 import java.util.Comparator;
+import java.util.Objects;
 import java.util.stream.Collectors;
 import java.util.stream.StreamSupport;
 import javax.swing.DefaultListCellRenderer;
@@ -28,9 +29,9 @@ import net.minecraft.util.SoundEvent;
 public class HavokSoundGUI extends BaseGUI<RewardsGUI> {
 
     private final int index;
-    private JComboBox<SoundEvent> soundComboBox;
     private JFormattedTextField delayTextField;
     private JFormattedTextField pitchTextField;
+    private JComboBox<SoundEvent> soundComboBox;
     private JFormattedTextField volumeTextField;
     private JFormattedTextField xTextField;
     private JFormattedTextField yTextField;
@@ -47,35 +48,18 @@ public class HavokSoundGUI extends BaseGUI<RewardsGUI> {
         parseJFrame(name, prevGUI, f -> mainPanel(f, sound, prevGUI));
     }
 
-    @Override
-    protected void update(RewardsGUI prevGUI) {
-        JTable soundsTable = prevGUI.soundsTable;
-        HavokSoundTableModel model = (HavokSoundTableModel) soundsTable.getModel();
-        HavokSound havokSound = new HavokSound(Integer.valueOf(delayTextField.getValue().toString()), Double.valueOf(xTextField.getValue().toString()), Double.valueOf(yTextField.getValue().toString()), Double.valueOf(zTextField.getValue().toString()), Float.valueOf(pitchTextField.getValue().toString()), Float.valueOf(volumeTextField.getValue().toString()), (SoundEvent) soundComboBox.getSelectedItem());
-        if (index == -1) {
-            model.add(havokSound);
-        }
-        else {
-            model.replace(index, havokSound);
-        }
-    }
-
-    private JPanel mainPanel(JFrame frame, HavokSound sound, RewardsGUI prevGUI) {
+    private JPanel buttons(JFrame frame, RewardsGUI prevGUI) {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(topPanel(sound), gbc(0, 0));
-        panel.add(parseJLabel("Offset", SwingConstants.CENTER), gbc(0, 1));
-        panel.add(offsetPanel(sound), gbc(0, 2));
-        panel.add(buttons(frame, prevGUI), gbc(0, 3));
-        return flowLayoutPanel(panel);
-    }
-
-    private JPanel topPanel(HavokSound sound) {
-        JPanel panel = gridBagLayoutPanel();
-        panel.add(delayPanel(sound), gbc(0, 0));
-        panel.add(soundPanel(sound), gbc(1, 0));
-        panel.add(pitchPanel(sound), gbc(0, 1));
-        panel.add(volumePanel(sound), gbc(1, 1));
-        return flowLayoutPanel(panel);
+        JButton saveButton = parseJButton("Save", l -> {
+            update(prevGUI);
+            frame.dispose();
+        });
+        saveButton.setPreferredSize(new Dimension(195, 26));
+        panel.add(flowLayoutPanel(saveButton), gbc(0, 0));
+        JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
+        cancelButton.setPreferredSize(new Dimension(195, 26));
+        panel.add(flowLayoutPanel(cancelButton), gbc(1, 0));
+        return panel;
     }
 
     private JPanel delayPanel(HavokSound sound) {
@@ -88,42 +72,13 @@ public class HavokSoundGUI extends BaseGUI<RewardsGUI> {
         return flowLayoutPanel(panel);
     }
 
-    private JPanel soundPanel(HavokSound sound) {
+    private JPanel mainPanel(JFrame frame, HavokSound sound, RewardsGUI prevGUI) {
         JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(parseJLabel("Particle: ", SwingConstants.CENTER), gbc(0, 0));
-        soundComboBox = new JComboBox<>(new SortedComboBoxModel<>(StreamSupport.stream(SoundEvent.REGISTRY.spliterator(), false).collect(Collectors.toList()), Comparator.comparing(o -> o.getRegistryName().toString())));
-        soundComboBox.setSelectedItem(sound.getSoundEvent());
-        soundComboBox.setRenderer(new DefaultListCellRenderer() {
-
-            @Override
-            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
-                label.setText(((SoundEvent) value).getRegistryName().toString());
-                return label;
-            }
-        });
-        panel.add(soundComboBox, gbc(1, 0));
-        return panel;
-    }
-
-    private JPanel pitchPanel(HavokSound sound) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(parseJLabel("Pitch: ", SwingConstants.CENTER), gbc(0, 0));
-        pitchTextField = new JFormattedTextField(new DecimalFormat());
-        pitchTextField.setValue(sound.getPitch());
-        pitchTextField.setPreferredSize(new Dimension(100, pitchTextField.getPreferredSize().height));
-        panel.add(pitchTextField, gbc(1, 0));
-        return panel;
-    }
-
-    private JPanel volumePanel(HavokSound sound) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(parseJLabel("Volume: ", SwingConstants.CENTER), gbc(0, 0));
-        volumeTextField = new JFormattedTextField(new DecimalFormat());
-        volumeTextField.setValue(sound.getVolume());
-        volumeTextField.setPreferredSize(new Dimension(100, volumeTextField.getPreferredSize().height));
-        panel.add(volumeTextField, gbc(1, 0));
-        return panel;
+        panel.add(topPanel(sound), gbc(0, 0));
+        panel.add(parseJLabel("Offset", SwingConstants.CENTER), gbc(0, 1));
+        panel.add(offsetPanel(sound), gbc(0, 2));
+        panel.add(buttons(frame, prevGUI), gbc(0, 3));
+        return flowLayoutPanel(panel);
     }
 
     private JPanel offsetPanel(HavokSound sound) {
@@ -152,17 +107,63 @@ public class HavokSoundGUI extends BaseGUI<RewardsGUI> {
         return flowLayoutPanel(panel);
     }
 
-    private JPanel buttons(JFrame frame, RewardsGUI prevGUI) {
+    private JPanel pitchPanel(HavokSound sound) {
         JPanel panel = new JPanel(new GridBagLayout());
-        JButton saveButton = parseJButton("Save", l -> {
-            update(prevGUI);
-            frame.dispose();
+        panel.add(parseJLabel("Pitch: ", SwingConstants.CENTER), gbc(0, 0));
+        pitchTextField = new JFormattedTextField(new DecimalFormat());
+        pitchTextField.setValue(sound.getPitch());
+        pitchTextField.setPreferredSize(new Dimension(100, pitchTextField.getPreferredSize().height));
+        panel.add(pitchTextField, gbc(1, 0));
+        return panel;
+    }
+
+    private JPanel soundPanel(HavokSound sound) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.add(parseJLabel("Particle: ", SwingConstants.CENTER), gbc(0, 0));
+        soundComboBox = new JComboBox<>(new SortedComboBoxModel<>(StreamSupport.stream(SoundEvent.REGISTRY.spliterator(), false).collect(Collectors.toList()), Comparator.comparing(o -> Objects.requireNonNull(o.getRegistryName()).toString())));
+        soundComboBox.setSelectedItem(sound.getSoundEvent());
+        soundComboBox.setRenderer(new DefaultListCellRenderer() {
+
+            @Override
+            public Component getListCellRendererComponent(JList<?> list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
+                JLabel label = (JLabel) super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                label.setText(Objects.requireNonNull(((SoundEvent) value).getRegistryName()).toString());
+                return label;
+            }
         });
-        saveButton.setPreferredSize(new Dimension(195, 26));
-        panel.add(flowLayoutPanel(saveButton), gbc(0, 0));
-        JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
-        cancelButton.setPreferredSize(new Dimension(195, 26));
-        panel.add(flowLayoutPanel(cancelButton), gbc(1, 0));
+        panel.add(soundComboBox, gbc(1, 0));
+        return panel;
+    }
+
+    private JPanel topPanel(HavokSound sound) {
+        JPanel panel = gridBagLayoutPanel();
+        panel.add(delayPanel(sound), gbc(0, 0));
+        panel.add(soundPanel(sound), gbc(1, 0));
+        panel.add(pitchPanel(sound), gbc(0, 1));
+        panel.add(volumePanel(sound), gbc(1, 1));
+        return flowLayoutPanel(panel);
+    }
+
+    @Override
+    protected void update(RewardsGUI prevGUI) {
+        JTable soundsTable = prevGUI.soundsTable;
+        HavokSoundTableModel model = (HavokSoundTableModel) soundsTable.getModel();
+        HavokSound havokSound = new HavokSound(Integer.valueOf(delayTextField.getValue().toString()), Double.valueOf(xTextField.getValue().toString()), Double.valueOf(yTextField.getValue().toString()), Double.valueOf(zTextField.getValue().toString()), Float.valueOf(pitchTextField.getValue().toString()), Float.valueOf(volumeTextField.getValue().toString()), (SoundEvent) soundComboBox.getSelectedItem());
+        if (index == -1) {
+            model.add(havokSound);
+        }
+        else {
+            model.replace(index, havokSound);
+        }
+    }
+
+    private JPanel volumePanel(HavokSound sound) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.add(parseJLabel("Volume: ", SwingConstants.CENTER), gbc(0, 0));
+        volumeTextField = new JFormattedTextField(new DecimalFormat());
+        volumeTextField.setValue(sound.getVolume());
+        volumeTextField.setPreferredSize(new Dimension(100, volumeTextField.getPreferredSize().height));
+        panel.add(volumeTextField, gbc(1, 0));
         return panel;
     }
 }

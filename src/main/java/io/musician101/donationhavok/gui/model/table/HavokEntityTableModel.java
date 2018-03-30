@@ -1,6 +1,6 @@
 package io.musician101.donationhavok.gui.model.table;
 
-import io.musician101.donationhavok.havok.HavokEntity;
+import io.musician101.donationhavok.handler.havok.HavokEntity;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
