@@ -11,6 +11,7 @@ import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
 import java.lang.reflect.Type;
 import java.util.Collections;
 import java.util.List;
+import java.util.Optional;
 import javax.annotation.Nonnull;
 
 public class DiscoveryHandler {
@@ -34,6 +35,16 @@ public class DiscoveryHandler {
     @Nonnull
     public List<Discovery> getCurrentDiscoveries() {
         return currentDiscoveries;
+    }
+
+    @Nonnull
+    public Optional<Discovery> getCurrentDiscovery(double tier) {
+        return currentDiscoveries.stream().filter(discovery -> discovery.getAmount() == tier).findFirst();
+    }
+
+    @Nonnull
+    public Optional<Discovery> getLegendaryDiscovery(double tier) {
+        return legendaryDiscoveries.stream().filter(discovery -> discovery.getAmount() == tier).findFirst();
     }
 
     @Nonnull

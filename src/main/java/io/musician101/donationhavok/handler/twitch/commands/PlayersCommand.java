@@ -23,7 +23,7 @@ public class PlayersCommand extends Command {
     }
 
     public PlayersCommand(boolean enabled, @Nonnull List<CommandPermission> permissions) {
-        super("players", "Show a list of players that are currently on the server.", "!players [name]", enabled, permissions);
+        super("players", "Show a list of players that are currently on the server or if the specified player is online.", "!players [name]", enabled, permissions);
     }
 
     @Override

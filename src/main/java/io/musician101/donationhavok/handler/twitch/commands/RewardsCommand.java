@@ -6,6 +6,7 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import io.musician101.donationhavok.DonationHavok;
+import io.musician101.donationhavok.handler.discovery.Discovery;
 import io.musician101.donationhavok.handler.discovery.DiscoveryHandler;
 import io.musician101.donationhavok.handler.havok.HavokRewards;
 import io.musician101.donationhavok.handler.havok.HavokRewardsHandler;
@@ -17,6 +18,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Optional;
 import javax.annotation.Nonnull;
+import org.apache.commons.lang3.StringUtils;
 
 public class RewardsCommand extends Command {
 
@@ -43,8 +45,22 @@ public class RewardsCommand extends Command {
             }
 
             DiscoveryHandler discoveryHandler = DonationHavok.INSTANCE.getDiscoveryHandler();
-            if (!discoveryHandler.hideCurrentUntilDiscovered()) {
-                Optional<HavokRewards> rewards = hrh.getRewards(tier);
+            Optional<HavokRewards> rewards = hrh.getRewards(tier);
+            if (discoveryHandler.hideCurrentUntilDiscovered()) {
+                Optional<Discovery> discovery = discoveryHandler.getCurrentDiscovery(tier);
+                if (discovery.isPresent()) {
+                    bot.sendMessage(atUser + ", for " + tier + " you can trigger"  + discovery.get().getRewardName() + ".", channel);
+                }
+                else {
+                    if (rewards.isPresent()) {
+                        bot.sendMessage(atUser + ", that reward hasn't been discovered yet.", channel);
+                    }
+                    else {
+                        bot.sendMessage(atUser + ", that amount is not enough to trigger any rewards.", channel);
+                    }
+                }
+            }
+            else {
                 if (rewards.isPresent()) {
                     bot.sendMessage(atUser + ", for " + tier + " you can trigger " + rewards.get().getName() + ".", channel);
                 }
@@ -52,14 +68,11 @@ public class RewardsCommand extends Command {
                     bot.sendMessage(atUser + ", that amount is not enough to trigger any rewards.", channel);
                 }
             }
-            else {
-                bot.sendMessage(atUser + ", reward discovery is not enabled.", channel);
-            }
 
             return;
         }
 
-        bot.sendMessage(atUser + ", invalid usage: " + getUsage(), channel);
+        bot.sendMessage(atUser + ", here are the available tiers: " + StringUtils.join(hrh.getRewards().keySet(), ", "), channel);
     }
 
     public static class Serializer extends BaseSerializer<RewardsCommand> {
