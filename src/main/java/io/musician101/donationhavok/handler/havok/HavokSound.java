@@ -19,7 +19,7 @@ import net.minecraft.util.math.BlockPos;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 @TypeOf(HavokSound.Serializer.class)
-public class HavokSound extends DoubleOffsetHavok {
+public class HavokSound extends HavokDoubleOffset {
 
     private final float pitch;
     private final SoundEvent soundEvent;

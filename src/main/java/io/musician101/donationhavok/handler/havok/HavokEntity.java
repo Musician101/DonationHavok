@@ -19,7 +19,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 @TypeOf(HavokEntity.Serializer.class)
-public class HavokEntity extends DoubleOffsetHavok {
+public class HavokEntity extends HavokDoubleOffset {
 
     private final NBTTagCompound nbtTagCompound;
 

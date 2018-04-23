@@ -16,7 +16,7 @@ import net.minecraft.world.WorldServer;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 @TypeOf(HavokParticle.Serializer.class)
-public class HavokParticle extends DoubleOffsetHavok {
+public class HavokParticle extends HavokDoubleOffset {
 
     private final EnumParticleTypes particle;
     private final double xVelocity;
