@@ -18,6 +18,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.tileentity.TileEntity;
+import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -94,6 +95,7 @@ public class HavokBlock extends HavokOffset<Integer> {
         if (DonationHavok.INSTANCE.getRewardsHandler().isReplaceable(player.getEntityWorld(), blockPos)) {
             wreak("HavokBlockDelay:" + getDelay(), () -> {
                 World world = FMLCommonHandler.instance().getMinecraftServerInstance().getEntityWorld();
+                world.playSound(null, blockPos, blockState.getBlock().getSoundType(blockState, world, blockPos, null).getPlaceSound(), SoundCategory.BLOCKS, 1F, 1F);
                 world.setBlockState(blockPos, blockState);
                 TileEntity tileEntity = blockState.getBlock().createTileEntity(world, blockState);
                 if (tileEntity != null) {
