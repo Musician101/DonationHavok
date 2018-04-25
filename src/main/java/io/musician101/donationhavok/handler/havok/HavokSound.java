@@ -10,13 +10,10 @@ import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
 import io.musician101.donationhavok.util.json.adapter.TypeOf;
 import java.lang.reflect.Type;
 import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.network.play.server.SPacketSoundEffect;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.common.FMLCommonHandler;
 
 @TypeOf(HavokSound.Serializer.class)
 public class HavokSound extends HavokDoubleOffset {
@@ -53,14 +50,7 @@ public class HavokSound extends HavokDoubleOffset {
 
     @Override
     public void wreak(EntityPlayer player, BlockPos originalPos) {
-        wreak("HavokParticle-Delay:" + getDelay(), () -> {
-            if (FMLCommonHandler.instance().getSide().isServer()) {
-                ((EntityPlayerMP) player).connection.sendPacket(new SPacketSoundEffect(soundEvent, SoundCategory.MASTER, player.posX, player.posY, player.posZ, volume, pitch));
-            }
-            else {
-                player.playSound(soundEvent, volume, pitch);
-            }
-        });
+        wreak("HavokParticle-Delay:" + getDelay(), () -> player.getEntityWorld().playSound(null, originalPos.add(getXOffset(), getYOffset(), getZOffset()), soundEvent, SoundCategory.MASTER, volume, pitch));
     }
 
     public static class Serializer extends BaseSerializer<HavokSound> {

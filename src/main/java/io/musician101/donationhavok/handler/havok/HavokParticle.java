@@ -57,14 +57,7 @@ public class HavokParticle extends HavokDoubleOffset {
 
     @Override
     public void wreak(EntityPlayer player, BlockPos originalPos) {
-        wreak("HavokParticle-Delay:" + getDelay(), () -> {
-            if (FMLCommonHandler.instance().getSide().isServer()) {
-                ((WorldServer) player.getEntityWorld()).spawnParticle(particle, originalPos.getX() + getXOffset(), originalPos.getY() + getYOffset(), originalPos.getZ() + getZOffset(), 1, xVelocity, yVelocity, zVelocity, 1);
-            }
-            else {
-                player.getEntityWorld().spawnParticle(particle, originalPos.getX() + getXOffset(), originalPos.getY() + getYOffset(), originalPos.getZ() + getZOffset(), xVelocity, yVelocity, zVelocity);
-            }
-        });
+        wreak("HavokParticle-Delay:" + getDelay(), () -> ((WorldServer) FMLCommonHandler.instance().getMinecraftServerInstance().getEntityWorld()).spawnParticle(particle, originalPos.getX() + getXOffset(), originalPos.getY() + getYOffset(), originalPos.getZ() + getZOffset(), 1, xVelocity, yVelocity, zVelocity, 1));
     }
 
     public static class Serializer extends BaseSerializer<HavokParticle> {
