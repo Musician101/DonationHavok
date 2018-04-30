@@ -8,7 +8,7 @@ import java.awt.event.MouseEvent;
 import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BiConsumer;
-import java.util.function.Function;
+import javax.annotation.Nonnull;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTable;
@@ -39,7 +39,7 @@ public class TableGUI<M extends ListTableModel<T>, T> extends BaseGUI<RewardsGUI
         return panel;
     }
 
-    private Optional<T> getSelectedObject(JTable table, Class<T> objectType) {
+    private Optional<T> getSelectedObject(@Nonnull JTable table, Class<T> objectType) {
         int row = table.getSelectedRow();
         return row == -1 ? Optional.empty() : Optional.of(objectType.cast(((ListTableModel) table.getModel()).getObjectAt(row)));
     }
@@ -50,18 +50,18 @@ public class TableGUI<M extends ListTableModel<T>, T> extends BaseGUI<RewardsGUI
 
     private JPanel mainPanel(M model, T defaultObject, BiConsumer<T, Integer> openGUI) {
         JPanel panel = new JPanel(new GridBagLayout());
-        table = parseJTable(model, parseMouseAdapter((Class<T>) defaultObject.getClass(), openGUI).apply(table));
+        table = parseJTable(model, parseMouseAdapter((Class<T>) defaultObject.getClass(), openGUI));
         panel.add(new JScrollPane(table), gbc(0, 0));
         panel.add(flowLayoutPanel(buttonPanel((Class<M>) model.getClass(), defaultObject, openGUI)), gbc(0, 1));
         return flowLayoutPanel(panel);
     }
 
-    private Function<JTable, MouseAdapter> parseMouseAdapter(Class<T> objectType, BiConsumer<T, Integer> openGUI) {
-        return table -> new MouseAdapter() {
+    private MouseAdapter parseMouseAdapter(Class<T> objectType, BiConsumer<T, Integer> openGUI) {
+        return new MouseAdapter() {
 
             @Override
             public void mouseClicked(MouseEvent e) {
-                getSelectedObject(table, objectType).filter(command -> e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2).ifPresent(t -> openGUI.accept(t, table.getSelectedRow()));
+                getSelectedObject(TableGUI.this.table, objectType).filter(command -> e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2).ifPresent(t -> openGUI.accept(t, table.getSelectedRow()));
             }
         };
     }
