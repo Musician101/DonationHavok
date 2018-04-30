@@ -24,9 +24,9 @@ public class HavokSound extends HavokDoubleOffset {
 
     public HavokSound() {
         super(0, 0D, 0D, 0D);
-        this.pitch = 1;
-        this.volume = 1;
-        this.soundEvent = SoundEvent.REGISTRY.getObject(new ResourceLocation("entity.generic.explode"));
+        this.pitch = 1F;
+        this.volume = 1F;
+        this.soundEvent = SoundEvent.REGISTRY.getObject(new ResourceLocation("minecraft:entity.generic.explode"));
     }
 
     public HavokSound(int delay, double xOffset, double yOffset, double zOffset, float pitch, float volume, SoundEvent soundEvent) {
@@ -50,7 +50,7 @@ public class HavokSound extends HavokDoubleOffset {
 
     @Override
     public void wreak(EntityPlayer player, BlockPos originalPos) {
-        wreak("HavokParticle-Delay:" + getDelay(), () -> player.getEntityWorld().playSound(null, originalPos.add(getXOffset(), getYOffset(), getZOffset()), soundEvent, SoundCategory.MASTER, volume, pitch));
+        wreak("HavokParticle-Delay:" + getDelay(), () -> player.getEntityWorld().playSound(player, originalPos.add(getXOffset(), getYOffset(), getZOffset()), soundEvent, SoundCategory.MASTER, volume, pitch));
     }
 
     public static class Serializer extends BaseSerializer<HavokSound> {
