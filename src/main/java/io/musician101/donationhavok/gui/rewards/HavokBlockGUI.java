@@ -332,7 +332,7 @@ public class HavokBlockGUI extends BaseGUI<RewardsGUI> {
         return jPopupMenu;
     }
 
-    private JPanel leftPanel(HavokBlock block) {
+    private JPanel leftPanel(HavokBlock block, JFrame frame, RewardsGUI prevGUI) {
         JPanel panel = new JPanel(new GridBagLayout());
         panel.add(parseJLabel("Delay: ", SwingConstants.LEFT), gbc(0, 0));
         delayTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
@@ -340,22 +340,24 @@ public class HavokBlockGUI extends BaseGUI<RewardsGUI> {
         panel.add(delayTextField, gbc(0, 1));
         panel.add(parseJLabel("Offset", SwingConstants.CENTER), gbc(0, 2));
         panel.add(offsetPanel(block), gbc(0, 3));
-        return flowLayoutPanel(panel);
-    }
-
-    private JPanel mainPanel(JFrame frame, HavokBlock block, RewardsGUI prevGUI) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(leftPanel(block), gbc(0, 0));
-        panel.add(rightPanel(block), gbc(1, 0));
+        JPanel saveButtons = gridBagLayoutPanel();
         JButton saveButton = parseJButton("Save", l -> {
             update(prevGUI);
             frame.dispose();
         });
         saveButton.setPreferredSize(new Dimension(195, 26));
-        panel.add(flowLayoutPanel(saveButton), gbc(1, 0));
+        saveButtons.add(flowLayoutPanel(saveButton), gbc(0, 0));
         JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
         cancelButton.setPreferredSize(new Dimension(195, 26));
-        panel.add(flowLayoutPanel(cancelButton), gbc(1, 1));
+        saveButtons.add(flowLayoutPanel(cancelButton), gbc(1, 0));
+        panel.add(saveButtons, gbc(0, 4));
+        return flowLayoutPanel(panel);
+    }
+
+    private JPanel mainPanel(JFrame frame, HavokBlock block, RewardsGUI prevGUI) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.add(leftPanel(block, frame, prevGUI), gbc(0, 0));
+        panel.add(rightPanel(block), gbc(1, 0));
         return panel;
     }
 
