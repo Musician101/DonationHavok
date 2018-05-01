@@ -24,7 +24,7 @@ public class HavokRewardsTableModel extends AbstractTableModel {
 
     @Override
     public int getColumnCount() {
-        return 4;
+        return 7;
     }
 
     @Override
@@ -37,6 +37,12 @@ public class HavokRewardsTableModel extends AbstractTableModel {
             case 2:
                 return "Delay";
             case 3:
+                return "Starts Sale?";
+            case 4:
+                return "Discount";
+            case 5:
+                return "Sale Length";
+            case 6:
                 return "Parts";
             default:
                 return null;
@@ -74,6 +80,12 @@ public class HavokRewardsTableModel extends AbstractTableModel {
                 case 2:
                     return rewards.getDelay();
                 case 3:
+                    return rewards.triggersSale() ? "Yes" : "No";
+                case 4:
+                    return rewards.getDiscount();
+                case 5:
+                    return rewards.getSaleLength();
+                case 6:
                     List<String> parts = new ArrayList<>();
                     if (!rewards.getBlocks().isEmpty()) {
                         parts.add("Blocks");
@@ -107,8 +119,16 @@ public class HavokRewardsTableModel extends AbstractTableModel {
                         parts.add("Trigger Tiers");
                     }
 
+                    if (!rewards.getSchematics().isEmpty()) {
+                        parts.add("Schematics");
+                    }
+
                     if (!rewards.getSounds().isEmpty()) {
                         parts.add("Sounds");
+                    }
+
+                    if (!rewards.getStructures().isEmpty()) {
+                        parts.add("Structures");
                     }
 
                     return StringUtils.join(parts, ", ");

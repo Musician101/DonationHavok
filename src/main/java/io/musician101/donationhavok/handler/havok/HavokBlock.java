@@ -24,7 +24,7 @@ import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
 
 @TypeOf(HavokBlock.Serializer.class)
-public class HavokBlock extends HavokOffset<Integer> {
+public class HavokBlock extends HavokIntegerOffset {
 
     private final IBlockState blockState;
     private final NBTTagCompound nbtTagCompound;

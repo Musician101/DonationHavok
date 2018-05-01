@@ -33,6 +33,7 @@ import net.minecraftforge.fml.common.FMLCommonHandler;
 
 public class HavokRewardsHandler {
 
+    private static final SaleHandler SALE_HANDLER = new SaleHandler();
     private final int delay;
     private final boolean generateBook;
     @Nonnull
@@ -54,6 +55,14 @@ public class HavokRewardsHandler {
         this.nonReplaceableBlocks = nonReplaceableBlocks;
         this.replaceUnbreakableBlocks = replaceUnbreakableBlocks;
         this.rewards.putAll(rewards);
+    }
+
+    public static void startSale(double discount, int saleLength) {
+        SALE_HANDLER.startSale(discount, saleLength);
+    }
+
+    public static void stopSale() {
+        SALE_HANDLER.stopSale();
     }
 
     public boolean generateBook() {
@@ -107,7 +116,7 @@ public class HavokRewardsHandler {
 
     @Nonnull
     public Optional<HavokRewards> getRewards(double tier) {
-        return Optional.ofNullable(rewards.floorEntry(tier)).map(Entry::getValue);
+        return Optional.ofNullable(rewards.floorEntry(SALE_HANDLER.isRunning() ? tier : tier / SALE_HANDLER.getDiscount())).map(Entry::getValue);
     }
 
     @Nonnull

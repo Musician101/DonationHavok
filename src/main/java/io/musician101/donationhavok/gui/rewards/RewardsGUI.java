@@ -10,7 +10,9 @@ import io.musician101.donationhavok.gui.model.table.HavokItemStackTableModel;
 import io.musician101.donationhavok.gui.model.table.HavokMessageTableModel;
 import io.musician101.donationhavok.gui.model.table.HavokParticleTableModel;
 import io.musician101.donationhavok.gui.model.table.HavokRewardsTableModel;
+import io.musician101.donationhavok.gui.model.table.HavokSchematicTableModel;
 import io.musician101.donationhavok.gui.model.table.HavokSoundTableModel;
+import io.musician101.donationhavok.gui.model.table.HavokStructureTableModel;
 import io.musician101.donationhavok.gui.render.ITextComponentTableCellRenderer;
 import io.musician101.donationhavok.handler.havok.HavokBlock;
 import io.musician101.donationhavok.handler.havok.HavokCommand;
@@ -19,7 +21,9 @@ import io.musician101.donationhavok.handler.havok.HavokItemStack;
 import io.musician101.donationhavok.handler.havok.HavokMessage;
 import io.musician101.donationhavok.handler.havok.HavokParticle;
 import io.musician101.donationhavok.handler.havok.HavokRewards;
+import io.musician101.donationhavok.handler.havok.HavokSchematic;
 import io.musician101.donationhavok.handler.havok.HavokSound;
+import io.musician101.donationhavok.handler.havok.HavokStructure;
 import java.awt.Dimension;
 import java.awt.GridBagLayout;
 import java.awt.event.ActionListener;
@@ -48,12 +52,17 @@ public class RewardsGUI extends BaseGUI<ConfigGUI> {
     JTable itemsTable;
     JTable messagesTable;
     JTable particlesTable;
+    JTable schematicsTable;
     JTable soundsTable;
+    JTable structuresTable;
     private JCheckBox allowTargetViaNoteCheckBox;
     private JFormattedTextField delayTextField;
+    private JFormattedTextField discount;
+    private JFormattedTextField saleLength;
     private JFormattedTextField minAmountTextField;
     private JTextField nameTextField;
     private JCheckBox targetAllPlayersCheckBox;
+    private JCheckBox triggersSale;
     private JList<String> targetPlayers;
     private JList<Double> tierTriggers;
 
@@ -92,6 +101,16 @@ public class RewardsGUI extends BaseGUI<ConfigGUI> {
         panel.add(parseJLabel("Name:", SwingConstants.LEFT), gbc(0, 6));
         nameTextField = new JTextField(rewards.getName());
         panel.add(nameTextField, gbc(0, 7));
+        triggersSale = new JCheckBox("Triggers a sale?", rewards.triggersSale());
+        panel.add(triggersSale, gbc(0, 8));
+        panel.add(parseJLabel("Discount:", SwingConstants.LEFT), gbc(0, 9));
+        discount = new JFormattedTextField(new DecimalFormat());
+        discount.setValue(rewards.getDiscount());
+        panel.add(discount, gbc(0, 10));
+        panel.add(parseJLabel("Sale Duration:", SwingConstants.LEFT), gbc(0, 11));
+        saleLength = new JFormattedTextField(NumberFormat.getIntegerInstance());
+        saleLength.setValue(rewards.getSaleLength());
+        panel.add(saleLength, gbc(0, 12));
         return panel;
     }
 
@@ -132,9 +151,15 @@ public class RewardsGUI extends BaseGUI<ConfigGUI> {
         TableGUI<HavokParticleTableModel, HavokParticle> particles = new TableGUI<>(new HavokParticleTableModel(rewards.getParticles()), new HavokParticle(), (particle, index) -> new HavokParticleGUI(particle, index, this));
         particlesTable = particles.getTable();
         tabbedPane.addTab("Particles", particles.getPanel());
+        TableGUI<HavokSchematicTableModel, HavokSchematic> schematics = new TableGUI<>(new HavokSchematicTableModel(rewards.getSchematics()), new HavokSchematic(), (schematic, index) -> new HavokSchematicGUI(schematic, index, this));
+        schematicsTable = schematics.getTable();
+        tabbedPane.addTab("Schematics", schematics.getPanel());
         TableGUI<HavokSoundTableModel, HavokSound> sounds = new TableGUI<>(new HavokSoundTableModel(rewards.getSounds()), new HavokSound(), (sound, index) -> new HavokSoundGUI(sound, index, this));
         soundsTable = sounds.getTable();
         tabbedPane.addTab("Sounds", sounds.getPanel());
+        TableGUI<HavokStructureTableModel, HavokStructure> structures = new TableGUI<>(new HavokStructureTableModel(rewards.getStructures()), new HavokStructure(), (structure, index) -> new HavokStructureGUI(structure, index, this));
+        structuresTable = structures.getTable();
+        tabbedPane.addTab("Structures", structures.getPanel());
         tabbedPane.addTab("Target Players", targetPlayers(rewards));
         tabbedPane.addTab("Trigger Tiers", triggerTiers(rewards));
         panel.add(tabbedPane, gbc(0, 0));
@@ -175,7 +200,7 @@ public class RewardsGUI extends BaseGUI<ConfigGUI> {
 
     @Override
     protected final void update(ConfigGUI prevGUI) {
-        HavokRewards havokRewards = new HavokRewards(allowTargetViaNoteCheckBox.isSelected(), targetAllPlayersCheckBox.isSelected(), Integer.valueOf(delayTextField.getValue().toString()), nameTextField.getText(), ((SortedListModel<Double>) tierTriggers.getModel()).getElements(), ((HavokBlockTableModel) blocksTable.getModel()).getElements(), ((HavokCommandTableModel) commandsTable.getModel()).getElements(), ((HavokEntityTableModel) entitiesTable.getModel()).getElements(), ((HavokItemStackTableModel) itemsTable.getModel()).getElements(), ((HavokMessageTableModel) messagesTable.getModel()).getElements(), ((HavokParticleTableModel) particlesTable.getModel()).getElements(), ((HavokSoundTableModel) soundsTable.getModel()).getElements(), ((SortedListModel<String>) targetPlayers.getModel()).getElements());
+        HavokRewards havokRewards = new HavokRewards(allowTargetViaNoteCheckBox.isSelected(), targetAllPlayersCheckBox.isSelected(), triggersSale.isSelected(), Double.valueOf(discount.getValue().toString()), Integer.valueOf(delayTextField.getValue().toString()), Integer.valueOf(saleLength.getValue().toString()), nameTextField.getText(), ((SortedListModel<Double>) tierTriggers.getModel()).getElements(), ((HavokBlockTableModel) blocksTable.getModel()).getElements(), ((HavokCommandTableModel) commandsTable.getModel()).getElements(), ((HavokEntityTableModel) entitiesTable.getModel()).getElements(), ((HavokItemStackTableModel) itemsTable.getModel()).getElements(), ((HavokMessageTableModel) messagesTable.getModel()).getElements(), ((HavokParticleTableModel) particlesTable.getModel()).getElements(), ((HavokSchematicTableModel) schematicsTable.getModel()).getElements(), ((HavokSoundTableModel) soundsTable.getModel()).getElements(), ((HavokStructureTableModel) structuresTable.getModel()).getElements(), ((SortedListModel<String>) targetPlayers.getModel()).getElements());
         JTable rewards = prevGUI.rewards;
         HavokRewardsTableModel model = (HavokRewardsTableModel) rewards.getModel();
         if (index > -1) {

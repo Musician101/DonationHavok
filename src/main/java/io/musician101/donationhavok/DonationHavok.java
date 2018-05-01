@@ -49,6 +49,11 @@ public class DonationHavok {
     }
 
     @Nonnull
+    public File getConfigDir() {
+        return configDir;
+    }
+
+    @Nonnull
     public Logger getLogger() {
         return logger;
     }

@@ -85,7 +85,11 @@ public class StreamLabsHandler {
     public void runDonation(@Nonnull Donation donation) {
         HavokRewardsHandler handler = DonationHavok.INSTANCE.getRewardsHandler();
         handler.getPlayer().ifPresent(player -> handler.getRewards(donation.getAmount()).ifPresent(rewards -> {
-            DonationHavok.INSTANCE.getDiscoveryHandler().rewardsDiscovered(handler.getRewards().floorKey(donation.getAmount()), donation.getName(), rewards);
+            Double rewardAmount = handler.getRewards().floorKey(donation.getAmount());
+            if (rewardAmount != null) {
+                DonationHavok.INSTANCE.getDiscoveryHandler().rewardsDiscovered(rewardAmount, donation.getName(), rewards);
+            }
+
             handler.generateBook(player, donation.getName(), donation.getNote(), rewards);
             rewards.wreak(donation);
         }));

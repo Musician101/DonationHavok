@@ -3,6 +3,7 @@ package io.musician101.donationhavok.command;
 import io.musician101.donationhavok.Config;
 import io.musician101.donationhavok.DonationHavok;
 import io.musician101.donationhavok.handler.StreamLabsHandler.Donation;
+import io.musician101.donationhavok.handler.havok.HavokRewardsHandler;
 import io.musician101.donationhavok.handler.twitch.event.SubPlan;
 import io.musician101.donationhavok.network.Network;
 import io.musician101.donationhavok.network.message.JsonMessage;
@@ -49,6 +50,25 @@ public class DHCommand extends CommandBase {
 
                 return;
             }
+            else if (subCommand.equalsIgnoreCase("sale")) {
+                if (args[1].equalsIgnoreCase("stop")) {
+                    HavokRewardsHandler.stopSale();
+                    return;
+                }
+                else if (args[1].equalsIgnoreCase("start")) {
+                    if (args.length > 3) {
+                        double discount = parseDouble(args[2], 0D, 1D);
+                        int saleLength = parseInt(args[3], 0);
+                        HavokRewardsHandler.startSale(discount, saleLength);
+                        return;
+                    }
+                    else {
+                        throw new WrongUsageException("/dh sale start <discount> <saleLength>");
+                    }
+                }
+
+                throw new WrongUsageException("/dh sale <start | stop>");
+            }
             else if (subCommand.equalsIgnoreCase("test")) {
                 if (args.length > 2) {
                     EntityPlayerMP player = getCommandSenderAsPlayer(sender);
@@ -75,6 +95,9 @@ public class DHCommand extends CommandBase {
                             DonationHavok.INSTANCE.getTwitchHandler().runSubscription(subPlan.get(), streak);
                             return;
                         }
+                        else {
+                            throw new WrongUsageException("/dh " + type + " <PRIME | 1000 | 2000 | 3000> <subStreak>");
+                        }
                     }
                 }
                 // Debug code left in to bulk test but commented out to prevent accidental usage.
@@ -82,6 +105,8 @@ public class DHCommand extends CommandBase {
                     DonationHavok.INSTANCE.getStreamLabsHandler().test();
                     return;
                 }*/
+
+                throw new WrongUsageException("/dh test <bits | cheer | donation | sub | subscription>");
             }
         }
 
@@ -98,7 +123,12 @@ public class DHCommand extends CommandBase {
     @Override
     public List<String> getTabCompletions(MinecraftServer server, ICommandSender sender, String[] args, @Nullable BlockPos targetPos) {
         if (args.length == 1) {
-            return Stream.of("config", "reload", "test").filter(s -> s.startsWith(args[0].toLowerCase())).collect(Collectors.toList());
+            return Stream.of("config", "reload", "sale", "test").filter(s -> s.startsWith(args[0].toLowerCase())).collect(Collectors.toList());
+        }
+        else if (args[0].equalsIgnoreCase("sale")) {
+            if (args.length == 2) {
+                return Stream.of("start", "stop").filter(s -> s.startsWith(args[1].toLowerCase())).collect(Collectors.toList());
+            }
         }
         else if (args[0].equalsIgnoreCase("test")) {
             if (args.length == 2) {
@@ -123,6 +153,6 @@ public class DHCommand extends CommandBase {
     @Nonnull
     @Override
     public String getUsage(@Nonnull ICommandSender sender) {
-        return "/dh <config | reload | test <bits <amount> | cheer <amount> | donation <amount> [name] | sub <subPlan> <streak> | subscription <subPlan> <streak>>>";
+        return "/dh <config | reload | sale | test>";
     }
 }
