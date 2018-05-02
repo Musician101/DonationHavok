@@ -100,6 +100,7 @@ public class Keys {
     }, new NonReplaceableBlocksSerializer());
     public static final JsonKeyImpl<JsonArray, List<HavokParticle>> PARTICLES = listKey("particles", HavokParticle.class, new ObjectListSerializer<>(HavokParticle.class));
     public static final JsonKeyImpl<JsonPrimitive, Float> PITCH = floatKey("pitch");
+    public static final JsonKeyImpl<JsonObject, PlacementSettings> PLACEMENT_SETTINGS = key("placement_settings", TypeToken.get(PlacementSettings.class), new PlacementSettingsSerializer());
     public static final JsonKeyImpl<JsonObject, PlayersCommand> PLAYERS_COMMAND = key("players", TypeToken.get(PlayersCommand.class), new PlayersCommand.Serializer());
     public static final JsonKeyImpl<JsonPrimitive, String> RELATIVE_PATH = stringKey("relative_path");
     public static final JsonKeyImpl<JsonPrimitive, Boolean> REPLACE_UNBREAKABLE_BLOCKS = booleanKey("replace_unbreakable_blocks");
