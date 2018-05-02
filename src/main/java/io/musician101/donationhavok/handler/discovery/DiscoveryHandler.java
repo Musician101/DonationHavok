@@ -43,13 +43,13 @@ public class DiscoveryHandler {
     }
 
     @Nonnull
-    public Optional<Discovery> getLegendaryDiscovery(double tier) {
-        return legendaryDiscoveries.stream().filter(discovery -> discovery.getAmount() == tier).findFirst();
+    public List<Discovery> getLegendaryDiscoveries() {
+        return legendaryDiscoveries;
     }
 
     @Nonnull
-    public List<Discovery> getLegendaryDiscoveries() {
-        return legendaryDiscoveries;
+    public Optional<Discovery> getLegendaryDiscovery(double tier) {
+        return legendaryDiscoveries.stream().filter(discovery -> discovery.getAmount() == tier).findFirst();
     }
 
     public boolean hideCurrentUntilDiscovered() {

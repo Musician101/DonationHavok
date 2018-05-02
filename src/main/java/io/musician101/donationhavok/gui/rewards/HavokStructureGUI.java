@@ -26,12 +26,12 @@ import net.minecraft.world.gen.structure.template.PlacementSettings;
 public class HavokStructureGUI extends BaseGUI<RewardsGUI> {
 
     private final int index;
+    private JFormattedTextField delayTextField;
+    private JFormattedTextField integrity;
     private JComboBox<Mirror> mirror;
     private JComboBox<Rotation> rotation;
     private JFormattedTextField seed;
-    private JFormattedTextField integrity;
     private JTextField structureName;
-    private JFormattedTextField delayTextField;
     private JFormattedTextField xTextField;
     private JFormattedTextField yTextField;
     private JFormattedTextField zTextField;
@@ -47,29 +47,16 @@ public class HavokStructureGUI extends BaseGUI<RewardsGUI> {
         parseJFrame(name, prevGUI, f -> mainPanel(f, structure, prevGUI));
     }
 
-    private JPanel offsetPanel(HavokStructure structure) {
-        JPanel panel = new JPanel(new GridBagLayout());
-        panel.add(flowLayoutPanel(parseJLabel("X:", SwingConstants.LEFT)), gbc(0, 0));
-        xTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
-        xTextField.setValue(structure.getXOffset());
-        Dimension xDim = xTextField.getPreferredSize();
-        xDim.width = 100;
-        xTextField.setPreferredSize(xDim);
-        panel.add(xTextField, gbc(1, 0));
-        panel.add(flowLayoutPanel(parseJLabel("Y:", SwingConstants.LEFT)), gbc(2, 0));
-        yTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
-        yTextField.setValue(structure.getYOffset());
-        Dimension yDim = yTextField.getPreferredSize();
-        yDim.width = 100;
-        yTextField.setPreferredSize(yDim);
-        panel.add(yTextField, gbc(3, 0));
-        panel.add(flowLayoutPanel(parseJLabel("Z:", SwingConstants.LEFT)), gbc(4, 0));
-        zTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
-        zTextField.setValue(structure.getYOffset());
-        Dimension zDim = zTextField.getPreferredSize();
-        zDim.width = 100;
-        zTextField.setPreferredSize(zDim);
-        panel.add(zTextField, gbc(5, 0));
+    private JPanel leftPlacementSettingsPanel(PlacementSettings placementSettings) {
+        JPanel panel = gridBagLayoutPanel();
+        panel.add(parseJLabel("Mirror:", SwingConstants.LEFT), gbc(0, 0));
+        mirror = new JComboBox<>(new SortedComboBoxModel<>(Arrays.asList(Mirror.values()), Comparator.naturalOrder()));
+        mirror.setSelectedItem(placementSettings.getMirror());
+        panel.add(flowLayoutPanel(mirror), gbc(0, 1));
+        panel.add(parseJLabel("Integrity:", SwingConstants.LEFT), gbc(0, 2));
+        integrity = new JFormattedTextField(new DecimalFormat());
+        integrity.setValue(placementSettings.getIntegrity());
+        panel.add(integrity, gbc(0, 3));
         return flowLayoutPanel(panel);
     }
 
@@ -101,8 +88,29 @@ public class HavokStructureGUI extends BaseGUI<RewardsGUI> {
         return flowLayoutPanel(panel);
     }
 
-    private JPanel structurePanel(HavokStructure structure) {
-        JPanel panel = gridBagLayoutPanel();
+    private JPanel offsetPanel(HavokStructure structure) {
+        JPanel panel = new JPanel(new GridBagLayout());
+        panel.add(flowLayoutPanel(parseJLabel("X:", SwingConstants.LEFT)), gbc(0, 0));
+        xTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
+        xTextField.setValue(structure.getXOffset());
+        Dimension xDim = xTextField.getPreferredSize();
+        xDim.width = 100;
+        xTextField.setPreferredSize(xDim);
+        panel.add(xTextField, gbc(1, 0));
+        panel.add(flowLayoutPanel(parseJLabel("Y:", SwingConstants.LEFT)), gbc(2, 0));
+        yTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
+        yTextField.setValue(structure.getYOffset());
+        Dimension yDim = yTextField.getPreferredSize();
+        yDim.width = 100;
+        yTextField.setPreferredSize(yDim);
+        panel.add(yTextField, gbc(3, 0));
+        panel.add(flowLayoutPanel(parseJLabel("Z:", SwingConstants.LEFT)), gbc(4, 0));
+        zTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
+        zTextField.setValue(structure.getYOffset());
+        Dimension zDim = zTextField.getPreferredSize();
+        zDim.width = 100;
+        zTextField.setPreferredSize(zDim);
+        panel.add(zTextField, gbc(5, 0));
         return flowLayoutPanel(panel);
     }
 
@@ -127,16 +135,8 @@ public class HavokStructureGUI extends BaseGUI<RewardsGUI> {
         return flowLayoutPanel(panel);
     }
 
-    private JPanel leftPlacementSettingsPanel(PlacementSettings placementSettings) {
+    private JPanel structurePanel(HavokStructure structure) {
         JPanel panel = gridBagLayoutPanel();
-        panel.add(parseJLabel("Mirror:", SwingConstants.LEFT), gbc(0, 0));
-        mirror = new JComboBox<>(new SortedComboBoxModel<>(Arrays.asList(Mirror.values()), Comparator.naturalOrder()));
-        mirror.setSelectedItem(placementSettings.getMirror());
-        panel.add(flowLayoutPanel(mirror), gbc(0, 1));
-        panel.add(parseJLabel("Integrity:", SwingConstants.LEFT), gbc(0, 2));
-        integrity = new JFormattedTextField(new DecimalFormat());
-        integrity.setValue(placementSettings.getIntegrity());
-        panel.add(integrity, gbc(0, 3));
         return flowLayoutPanel(panel);
     }
 

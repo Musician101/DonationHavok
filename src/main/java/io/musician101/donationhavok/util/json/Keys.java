@@ -116,10 +116,10 @@ public class Keys {
     public static final JsonKeyImpl<JsonArray, List<HavokSound>> SOUNDS = listKey("sounds", HavokSound.class, new ObjectListSerializer<>(HavokSound.class));
     public static final JsonKeyImpl<JsonObject, StreamLabsHandler> STREAM_LABS = key("stream_labs", TypeToken.get(StreamLabsHandler.class), new StreamLabsHandler.Serializer());
     public static final JsonKeyImpl<JsonArray, List<HavokStructure>> STRUCTURES = listKey("structures", HavokStructure.class, new ObjectListSerializer<>(HavokStructure.class));
+    public static final JsonKeyImpl<JsonPrimitive, String> STRUCTURE_NAME = stringKey("structure_name");
     public static final JsonKeyImpl<JsonPrimitive, Boolean> SUBS_TRIGGER = booleanKey("subs_trigger");
     public static final JsonKeyImpl<JsonPrimitive, Boolean> TARGET_ALL_PLAYERS = booleanKey("target_all_players");
     public static final JsonKeyImpl<JsonArray, List<String>> TARGET_PLAYERS = listKey("target_players", String.class, new StringListSerializer());
-    public static final JsonKeyImpl<JsonPrimitive, String> STRUCTURE_NAME = stringKey("structure_name");
     public static final JsonKeyImpl<JsonObject, NBTTagCompound> TILE_ENTITY = key("tile_entity", TypeToken.get(NBTTagCompound.class), new NBTTagCompoundSerializer());
     public static final JsonKeyImpl<JsonPrimitive, String> TMI_TOKEN = stringKey("tmi_token");
     public static final JsonKeyImpl<JsonPrimitive, Boolean> TRIGGERS_SALE = booleanKey("trigger_sale");
@@ -137,7 +137,6 @@ public class Keys {
     public static final JsonKeyImpl<JsonPrimitive, Double> Z_OFFSET_DOUBLE = doubleKey("z_offset");
     public static final JsonKeyImpl<JsonPrimitive, Integer> Z_OFFSET_INT = integerKey("z_offset");
     public static final JsonKeyImpl<JsonPrimitive, Double> Z_VELOCITY = doubleKey("z_velocity");
-    public static final JsonKeyImpl<JsonObject, PlacementSettings> PLACEMENT_SETTINGS = key("placement_settings", TypeToken.get(PlacementSettings.class), new PlacementSettingsSerializer());
 
     private Keys() {
 

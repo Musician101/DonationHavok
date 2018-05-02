@@ -37,14 +37,11 @@ public class HavokRewards {
 
     private final boolean allowTargetViaNote;
     @Nonnull
-    private final List<HavokSchematic> schematics;
-    @Nonnull
-    private final List<HavokStructure> structures;
-    @Nonnull
     private final List<HavokBlock> blocks;
     @Nonnull
     private final List<HavokCommand> commands;
     private final int delay;
+    private final double discount;
     @Nonnull
     private final List<HavokEntity> entities;
     @Nonnull
@@ -55,16 +52,19 @@ public class HavokRewards {
     private final String name;
     @Nonnull
     private final List<HavokParticle> particles;
+    private final int saleLength;
+    @Nonnull
+    private final List<HavokSchematic> schematics;
     @Nonnull
     private final List<HavokSound> sounds;
+    @Nonnull
+    private final List<HavokStructure> structures;
     private final boolean targetAllPlayers;
     @Nonnull
     private final List<String> targetPlayers;
     @Nonnull
     private final List<Double> triggerTiers;
     private final boolean triggersSale;
-    private final double discount;
-    private final int saleLength;
 
     public HavokRewards() {
         this.allowTargetViaNote = true;
@@ -184,10 +184,6 @@ public class HavokRewards {
         return triggerTiers;
     }
 
-    public boolean triggersSale() {
-        return triggersSale;
-    }
-
     @Nonnull
     private List<EntityPlayer> parseTargetPlayers(@Nonnull String note) {
         if (FMLCommonHandler.instance().getSide().isServer()) {
@@ -233,6 +229,10 @@ public class HavokRewards {
 
     public boolean targetAllPlayers() {
         return targetAllPlayers;
+    }
+
+    public boolean triggersSale() {
+        return triggersSale;
     }
 
     public void wreak(@Nonnull Donation donation) {

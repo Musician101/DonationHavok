@@ -22,12 +22,12 @@ import org.apache.logging.log4j.Logger;
 public final class TwitchBot implements Runnable {
 
     private final CommandHandler commandHandler = new CommandHandler();
+    private final String streamerName;
     private boolean listenForBits = false;
     private boolean listenForSubs = false;
     private BufferedReader reader;
     private boolean stopped = true;
     private BufferedWriter writer;
-    private final String streamerName;
 
     TwitchBot(String streamerName) {
         this.streamerName = streamerName;
@@ -157,6 +157,13 @@ public final class TwitchBot implements Runnable {
         DonationHavok.INSTANCE.getLogger().info("> PART " + channel);
     }
 
+    @Override
+    public void run() {
+        connect();
+        joinChannel(streamerName);
+        start();
+    }
+
     public void runCheer(Cheer cheer) {
         FMLCommonHandler.instance().getMinecraftServerInstance().callFromMainThread(Executors.callable(() -> {
             HavokRewardsHandler handler = DonationHavok.INSTANCE.getRewardsHandler();
@@ -265,12 +272,5 @@ public final class TwitchBot implements Runnable {
             stopped = true;
             sendRawMessage("Stopping");
         }
-    }
-
-    @Override
-    public void run() {
-        connect();
-        joinChannel(streamerName);
-        start();
     }
 }

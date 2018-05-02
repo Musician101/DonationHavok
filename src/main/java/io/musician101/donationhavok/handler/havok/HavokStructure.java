@@ -25,9 +25,9 @@ public class HavokStructure extends HavokIntegerOffset {
 
     @Nonnull
     private final PlacementSettings placementSettings;
+    private final long seed;
     @Nonnull
     private final String structureName;
-    private final long seed;
 
     public HavokStructure() {
         this(0, 0, 0, 0, "endcity/base_floor", new PlacementSettings(), 0L);
@@ -38,6 +38,20 @@ public class HavokStructure extends HavokIntegerOffset {
         this.structureName = structureName;
         this.placementSettings = placementSettings;
         this.seed = seed;
+    }
+
+    @Nonnull
+    public PlacementSettings getPlacementSettings() {
+        return placementSettings;
+    }
+
+    public long getPlacementSettingsSeed() {
+        return seed;
+    }
+
+    @Nonnull
+    public String getStructureName() {
+        return structureName;
     }
 
     @Override
@@ -53,20 +67,6 @@ public class HavokStructure extends HavokIntegerOffset {
                 template.addBlocksToWorld(world, originalPos.add(getXOffset(), getYOffset(), getZOffset()), placementSettings);
             }
         });
-    }
-
-    @Nonnull
-    public PlacementSettings getPlacementSettings() {
-        return placementSettings;
-    }
-
-    @Nonnull
-    public String getStructureName() {
-        return structureName;
-    }
-
-    public long getPlacementSettingsSeed() {
-        return seed;
     }
 
     public static class Serializer extends BaseSerializer<HavokStructure> {

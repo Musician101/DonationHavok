@@ -66,6 +66,70 @@ public class HavokSchematic extends HavokIntegerOffset {
         this.relativePath = relativePath;
     }
 
+    @Nonnull
+    public String getRelativePath() {
+        return relativePath;
+    }
+
+    private Rotation getRotation(EnumFacing direction) {
+        switch (direction) {
+            case WEST:
+                return Rotation.CLOCKWISE_90;
+            case NORTH:
+                return Rotation.CLOCKWISE_180;
+            case EAST:
+                return Rotation.COUNTERCLOCKWISE_90;
+            default:
+                return Rotation.NONE;
+        }
+    }
+
+    private NBTTagCompound getTileEntity(int x, int y, int z, NBTTagList tileEntities) {
+        for (int i = 0; i < tileEntities.tagCount(); i++) {
+            NBTTagCompound nbt = tileEntities.getCompoundTagAt(i);
+            if (nbt.getInteger("x") == x && nbt.getInteger("y") == y && nbt.getInteger("z") == z) {
+                return nbt;
+            }
+        }
+
+        return new NBTTagCompound();
+    }
+
+    private Vec3i rotateDimensions(Rotation rotation, int width, int height, int length) {
+        switch (rotation) {
+            case COUNTERCLOCKWISE_90:
+            case NONE:
+                return new Vec3i(width, height, length);
+            default:
+                return new Vec3i(length, height, width);
+        }
+    }
+
+    private BlockPos rotatePos(BlockPos blockPos, Rotation rotation, Vec3i dimensions) {
+        int rotateCount = 0;
+        switch (rotation) {
+            case CLOCKWISE_90:
+                rotateCount = 1;
+                break;
+            case CLOCKWISE_180:
+                rotateCount = 2;
+                break;
+            case COUNTERCLOCKWISE_90:
+                rotateCount = 3;
+                break;
+        }
+
+        int x = blockPos.getX();
+        int z = blockPos.getZ();
+        for (int i = 0; i < rotateCount; i++) {
+            int rx = dimensions.getX() - 1 - z;
+            z = x;
+            x = rx;
+        }
+
+        return new BlockPos(x, blockPos.getY(), z);
+    }
+
     @Override
     public void wreak(EntityPlayer player, BlockPos originalPos) {
         NBTTagCompound schematic;
@@ -134,70 +198,6 @@ public class HavokSchematic extends HavokIntegerOffset {
         }
 
         wreak("HavokSchematicDelay:" + getDelay(), () -> IntStream.range(0, lines.size()).forEach(j -> DonationHavok.INSTANCE.getScheduler().scheduleTask("HavokSchematicPartDelay:" + j, j, () -> lines.get(j).forEach(Runnable::run))));
-    }
-
-    private Vec3i rotateDimensions(Rotation rotation, int width, int height, int length) {
-        switch (rotation) {
-            case COUNTERCLOCKWISE_90:
-            case NONE:
-                return new Vec3i(width, height, length);
-            default:
-                return new Vec3i(length, height, width);
-        }
-    }
-
-    private BlockPos rotatePos(BlockPos blockPos, Rotation rotation, Vec3i dimensions) {
-        int rotateCount = 0;
-        switch (rotation) {
-            case CLOCKWISE_90:
-                rotateCount = 1;
-                break;
-            case CLOCKWISE_180:
-                rotateCount = 2;
-                break;
-            case COUNTERCLOCKWISE_90:
-                rotateCount = 3;
-                break;
-        }
-
-        int x = blockPos.getX();
-        int z = blockPos.getZ();
-        for (int i = 0; i < rotateCount; i++) {
-            int rx = dimensions.getX() - 1 - z;
-            z = x;
-            x = rx;
-        }
-
-        return new BlockPos(x, blockPos.getY(), z);
-    }
-
-    private Rotation getRotation(EnumFacing direction) {
-        switch (direction) {
-            case WEST:
-                return Rotation.CLOCKWISE_90;
-            case NORTH:
-                return Rotation.CLOCKWISE_180;
-            case EAST:
-                return Rotation.COUNTERCLOCKWISE_90;
-            default:
-                return Rotation.NONE;
-        }
-    }
-
-    private NBTTagCompound getTileEntity(int x, int y, int z, NBTTagList tileEntities) {
-        for (int i = 0; i < tileEntities.tagCount(); i++) {
-            NBTTagCompound nbt = tileEntities.getCompoundTagAt(i);
-            if (nbt.getInteger("x") == x && nbt.getInteger("y") == y && nbt.getInteger("z") == z) {
-                return nbt;
-            }
-        }
-
-        return new NBTTagCompound();
-    }
-
-    @Nonnull
-    public String getRelativePath() {
-        return relativePath;
     }
 
     public static class Serializer extends BaseSerializer<HavokSchematic> {

@@ -49,7 +49,7 @@ public class RewardsCommand extends Command {
             if (discoveryHandler.hideCurrentUntilDiscovered()) {
                 Optional<Discovery> discovery = discoveryHandler.getCurrentDiscovery(tier);
                 if (discovery.isPresent()) {
-                    bot.sendMessage(atUser + ", for " + tier + " you can trigger"  + discovery.get().getRewardName() + ".", channel);
+                    bot.sendMessage(atUser + ", for " + tier + " you can trigger" + discovery.get().getRewardName() + ".", channel);
                 }
                 else {
                     if (rewards.isPresent()) {

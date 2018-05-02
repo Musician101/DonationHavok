@@ -44,13 +44,13 @@ public class DonationHavok {
     private TwitchHandler twitchHandler;
 
     @Nonnull
-    public DiscoveryHandler getDiscoveryHandler() {
-        return discoveryHandler;
+    public File getConfigDir() {
+        return configDir;
     }
 
     @Nonnull
-    public File getConfigDir() {
-        return configDir;
+    public DiscoveryHandler getDiscoveryHandler() {
+        return discoveryHandler;
     }
 
     @Nonnull

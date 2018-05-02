@@ -18,8 +18,8 @@ import javax.swing.SwingConstants;
 public class HavokSchematicGUI extends BaseGUI<RewardsGUI> {
 
     private final int index;
-    private JTextField relativePath;
     private JFormattedTextField delayTextField;
+    private JTextField relativePath;
     private JFormattedTextField xTextField;
     private JFormattedTextField yTextField;
     private JFormattedTextField zTextField;
@@ -33,6 +33,31 @@ public class HavokSchematicGUI extends BaseGUI<RewardsGUI> {
         }
 
         parseJFrame(name, prevGUI, f -> mainPanel(f, schematic, prevGUI));
+    }
+
+    private JPanel mainPanel(JFrame frame, HavokSchematic schematic, RewardsGUI prevGUI) {
+        JPanel panel = gridBagLayoutPanel();
+        panel.add(parseJLabel("Delay: ", SwingConstants.LEFT), gbc(0, 0));
+        delayTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
+        delayTextField.setValue(schematic.getDelay());
+        panel.add(delayTextField, gbc(0, 1));
+        panel.add(parseJLabel("Offset", SwingConstants.CENTER), gbc(0, 2));
+        panel.add(offsetPanel(schematic), gbc(0, 3));
+        panel.add(parseJLabel("Path Relative To Config Folder:", SwingConstants.LEFT), gbc(0, 4));
+        relativePath = new JTextField(schematic.getRelativePath());
+        panel.add(relativePath, gbc(0, 5));
+        JPanel saveButtons = gridBagLayoutPanel();
+        JButton saveButton = parseJButton("Save", l -> {
+            update(prevGUI);
+            frame.dispose();
+        });
+        saveButton.setPreferredSize(new Dimension(195, 26));
+        saveButtons.add(flowLayoutPanel(saveButton), gbc(0, 0));
+        JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
+        cancelButton.setPreferredSize(new Dimension(195, 26));
+        saveButtons.add(flowLayoutPanel(cancelButton), gbc(1, 0));
+        panel.add(saveButtons, gbc(0, 6));
+        return flowLayoutPanel(panel);
     }
 
     private JPanel offsetPanel(HavokSchematic schematic) {
@@ -58,31 +83,6 @@ public class HavokSchematicGUI extends BaseGUI<RewardsGUI> {
         zDim.width = 100;
         zTextField.setPreferredSize(zDim);
         panel.add(zTextField, gbc(5, 0));
-        return flowLayoutPanel(panel);
-    }
-
-    private JPanel mainPanel(JFrame frame, HavokSchematic schematic, RewardsGUI prevGUI) {
-        JPanel panel = gridBagLayoutPanel();
-        panel.add(parseJLabel("Delay: ", SwingConstants.LEFT), gbc(0, 0));
-        delayTextField = new JFormattedTextField(NumberFormat.getIntegerInstance());
-        delayTextField.setValue(schematic.getDelay());
-        panel.add(delayTextField, gbc(0, 1));
-        panel.add(parseJLabel("Offset", SwingConstants.CENTER), gbc(0, 2));
-        panel.add(offsetPanel(schematic), gbc(0, 3));
-        panel.add(parseJLabel("Path Relative To Config Folder:", SwingConstants.LEFT), gbc(0, 4));
-        relativePath = new JTextField(schematic.getRelativePath());
-        panel.add(relativePath, gbc(0, 5));
-        JPanel saveButtons = gridBagLayoutPanel();
-        JButton saveButton = parseJButton("Save", l -> {
-            update(prevGUI);
-            frame.dispose();
-        });
-        saveButton.setPreferredSize(new Dimension(195, 26));
-        saveButtons.add(flowLayoutPanel(saveButton), gbc(0, 0));
-        JButton cancelButton = parseJButton("Cancel", l -> frame.dispose());
-        cancelButton.setPreferredSize(new Dimension(195, 26));
-        saveButtons.add(flowLayoutPanel(cancelButton), gbc(1, 0));
-        panel.add(saveButtons, gbc(0, 6));
         return flowLayoutPanel(panel);
     }
 

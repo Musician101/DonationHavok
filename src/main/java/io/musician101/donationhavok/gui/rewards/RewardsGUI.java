@@ -58,13 +58,13 @@ public class RewardsGUI extends BaseGUI<ConfigGUI> {
     private JCheckBox allowTargetViaNoteCheckBox;
     private JFormattedTextField delayTextField;
     private JFormattedTextField discount;
-    private JFormattedTextField saleLength;
     private JFormattedTextField minAmountTextField;
     private JTextField nameTextField;
+    private JFormattedTextField saleLength;
     private JCheckBox targetAllPlayersCheckBox;
-    private JCheckBox triggersSale;
     private JList<String> targetPlayers;
     private JList<Double> tierTriggers;
+    private JCheckBox triggersSale;
 
     public RewardsGUI(double minAmount, HavokRewards rewards, int index, ConfigGUI prevGUI) {
         this.index = index;
