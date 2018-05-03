@@ -70,7 +70,6 @@ public class JsonMessage implements IMessage {
                 EntityPlayerMP player = ctx.getServerHandler().player;
                 try {
                     instance.saveConfig(dh, hrh, slh, th);
-                    DonationHavok.INSTANCE.getTwitchHandler().connect();
                     player.sendMessage(new TextComponentString("Config saved."));
                 }
                 catch (IOException e) {
