@@ -66,20 +66,20 @@ public class Config {
         @Override
         public Config deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonObject jsonObject = json.getAsJsonObject();
-            DiscoveryHandler discoveryHandler = Keys.DISCOVERY.deserializeFromParent(jsonObject).orElse(new DiscoveryHandler());
-            HavokRewardsHandler havokRewardsHandler = Keys.GENERAL.deserializeFromParent(jsonObject).orElse(new HavokRewardsHandler());
-            StreamLabsHandler streamLabsHandler = Keys.STREAM_LABS.deserializeFromParent(jsonObject).orElse(new StreamLabsHandler());
-            TwitchHandler twitchHandler = Keys.TWITCH.deserializeFromParent(jsonObject).orElse(new TwitchHandler());
+            DiscoveryHandler discoveryHandler = deserialize(jsonObject, context, Keys.DISCOVERY, new DiscoveryHandler());
+            HavokRewardsHandler havokRewardsHandler = deserialize(jsonObject, context, Keys.GENERAL, new HavokRewardsHandler());
+            StreamLabsHandler streamLabsHandler = deserialize(jsonObject, context, Keys.STREAM_LABS, new StreamLabsHandler());
+            TwitchHandler twitchHandler = deserialize(jsonObject, context, Keys.TWITCH, new TwitchHandler());
             return new Config(discoveryHandler, havokRewardsHandler, streamLabsHandler, twitchHandler);
         }
 
         @Override
         public JsonElement serialize(Config src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject jsonObject = new JsonObject();
-            Keys.DISCOVERY.serialize(src.getDiscoveryHandler(), jsonObject);
-            Keys.GENERAL.serialize(src.getHavokRewardsHandler(), jsonObject);
-            Keys.STREAM_LABS.serialize(src.getStreamLabsHandler(), jsonObject);
-            Keys.TWITCH.serialize(src.getTwitchHandler(), jsonObject);
+            serialize(jsonObject, context, Keys.DISCOVERY, src.getDiscoveryHandler());
+            serialize(jsonObject, context, Keys.GENERAL, src.getHavokRewardsHandler());
+            serialize(jsonObject, context, Keys.STREAM_LABS, src.getStreamLabsHandler());
+            serialize(jsonObject, context, Keys.TWITCH, src.getTwitchHandler());
             return jsonObject;
         }
     }
