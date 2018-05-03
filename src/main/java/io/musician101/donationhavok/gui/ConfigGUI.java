@@ -31,7 +31,6 @@ import java.text.NumberFormat;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TreeMap;
-import java.util.stream.IntStream;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.swing.JButton;
@@ -163,7 +162,7 @@ public final class ConfigGUI extends BaseGUI<BaseGUI> {
 
             new DiscoveryGUI(((DiscoveryTableModel) currentDiscoveries.getModel()).getObjectAt(row), ConfigGUI.this, row, false);
         })), gbc(2, 0));
-        panel.add(flowLayoutPanel(parseJButton("Delete", l -> IntStream.of(currentDiscoveries.getSelectedRows()).forEach(row -> ((DiscoveryTableModel) currentDiscoveries.getModel()).remove(row)))), gbc(3, 0));
+        panel.add(flowLayoutPanel(parseJButton("Delete", l -> ((DiscoveryTableModel) currentDiscoveries.getModel()).remove(currentDiscoveries.getSelectedRows()))), gbc(3, 0));
         return flowLayoutPanel(panel);
     }
 
@@ -286,7 +285,7 @@ public final class ConfigGUI extends BaseGUI<BaseGUI> {
 
             new DiscoveryGUI(((DiscoveryTableModel) legendaryDiscoveries.getModel()).getObjectAt(row), ConfigGUI.this, row, false);
         })), gbc(2, 0));
-        panel.add(flowLayoutPanel(parseJButton("Delete", l -> IntStream.of(legendaryDiscoveries.getSelectedRows()).forEach(row -> ((DiscoveryTableModel) legendaryDiscoveries.getModel()).remove(row)))), gbc(3, 0));
+        panel.add(flowLayoutPanel(parseJButton("Delete", l -> ((DiscoveryTableModel) legendaryDiscoveries.getModel()).remove(legendaryDiscoveries.getSelectedRows()))), gbc(3, 0));
         return flowLayoutPanel(panel);
     }
 

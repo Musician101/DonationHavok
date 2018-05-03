@@ -5,7 +5,6 @@ import io.musician101.donationhavok.gui.model.table.ListTableModel;
 import java.awt.GridBagLayout;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
-import java.util.Arrays;
 import java.util.Optional;
 import java.util.function.BiConsumer;
 import javax.annotation.Nonnull;
@@ -30,7 +29,7 @@ public class TableGUI<M extends ListTableModel<T>, T> extends BaseGUI<RewardsGUI
         panel.add(flowLayoutPanel(parseJButton("Edit", e -> getSelectedObject(table, (Class<T>) defaultObject.getClass()).ifPresent(t -> openGUI.accept(t, table.getSelectedRow())))), gbc(2, 0));
         panel.add(flowLayoutPanel(parseJButton("Delete", e -> {
             M model = tableModelClass.cast(table.getModel());
-            Arrays.stream(table.getSelectedRows()).forEach(model::remove);
+            model.remove(table.getSelectedRows());
         })), gbc(3, 0));
         return panel;
     }

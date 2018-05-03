@@ -29,7 +29,6 @@ import java.awt.GridBagLayout;
 import java.awt.event.ActionListener;
 import java.text.DecimalFormat;
 import java.text.NumberFormat;
-import java.util.Arrays;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
 import javax.swing.JFormattedTextField;
@@ -173,7 +172,7 @@ public class RewardsGUI extends BaseGUI<ConfigGUI> {
         panel.add(new JScrollPane(targetPlayers), gbc(0, 0));
         panel.add(flowLayoutPanel(buttonPanel(l -> ((SortedListModel<String>) targetPlayers.getModel()).addElement(JOptionPane.showInputDialog("Enter target player's name.", "")), l -> {
             SortedListModel<String> model = (SortedListModel<String>) targetPlayers.getModel();
-            Arrays.stream(targetPlayers.getSelectedIndices()).forEach(model::remove);
+            targetPlayers.remove(targetPlayers.getSelectedIndex());
         })), gbc(0, 1));
         return panel;
     }
@@ -193,7 +192,7 @@ public class RewardsGUI extends BaseGUI<ConfigGUI> {
             }
         }, l -> {
             SortedListModel<Double> model = (SortedListModel<Double>) tierTriggers.getModel();
-            Arrays.stream(tierTriggers.getSelectedIndices()).forEach(model::remove);
+            model.remove(tierTriggers.getSelectedIndex());
         })), gbc(0, 1));
         return panel;
     }
