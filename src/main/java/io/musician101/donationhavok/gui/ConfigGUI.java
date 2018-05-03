@@ -32,6 +32,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.TreeMap;
 import java.util.stream.IntStream;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import javax.swing.JButton;
 import javax.swing.JCheckBox;
@@ -46,7 +47,9 @@ import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextField;
 import javax.swing.SwingConstants;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
+import net.minecraft.util.ResourceLocation;
 
 import static io.musician101.donationhavok.util.json.JsonKeyProcessor.GSON;
 
@@ -220,7 +223,7 @@ public final class ConfigGUI extends BaseGUI<BaseGUI> {
         Keys.DELAY.serialize(Integer.valueOf(rewardsDelay.getValue().toString()), jsonObject);
         Keys.GENERATE_BOOK.serialize(generateBook.isSelected(), jsonObject);
         Keys.MC_NAME.serialize(mcName.getText(), jsonObject);
-        Keys.NON_REPLACEABLE_BLOCKS.serialize(((SortedListModel<IBlockState>) nonReplaceableBlocks.getModel()).getElements(), jsonObject);
+        Keys.NON_REPLACEABLE_BLOCKS.serialize(((SortedListModel<IBlockState>) nonReplaceableBlocks.getModel()).getElements().stream().map(IBlockState::getBlock).map(Block.REGISTRY::getNameForObject).map(ResourceLocation::toString).collect(Collectors.toList()), jsonObject);
         Keys.REPLACE_UNBREAKABLE_BLOCKS.serialize(replaceUnbreakableBlocks.isSelected(), jsonObject);
         TreeMap<Double, HavokRewards> rewards = new TreeMap<>(Double::compare);
         rewards.putAll(((HavokRewardsTableModel) this.rewards.getModel()).getRewards());

@@ -28,12 +28,10 @@ import io.musician101.donationhavok.handler.twitch.commands.TwitchCommands;
 import io.musician101.donationhavok.util.json.adapter.BlockStateSerializer;
 import io.musician101.donationhavok.util.json.adapter.ItemStackSerializer;
 import io.musician101.donationhavok.util.json.adapter.MirrorSerializer;
-import io.musician101.donationhavok.util.json.adapter.NonReplaceableBlocksSerializer;
 import io.musician101.donationhavok.util.json.adapter.PlacementSettingsSerializer;
 import io.musician101.donationhavok.util.json.adapter.RotationSerializer;
 import io.musician101.donationhavok.util.json.adapter.list.DoubleListSerializer;
 import io.musician101.donationhavok.util.json.adapter.list.ObjectListSerializer;
-import io.musician101.donationhavok.util.json.adapter.list.StringListSerializer;
 import io.musician101.donationhavok.util.json.adapter.nbt.NBTTagCompoundSerializer;
 import java.util.List;
 import java.util.stream.Collector;
@@ -95,18 +93,14 @@ public class Keys {
     public static final JsonKeyImpl<JsonPrimitive, Mirror> MIRROR = key("mirror", TypeToken.get(Mirror.class), new MirrorSerializer());
     public static final JsonKeyImpl<JsonPrimitive, String> NAME = stringKey("name");
     public static final JsonKeyImpl<JsonObject, NBTTagCompound> NBT = key("nbt", TypeToken.get(NBTTagCompound.class), new NBTTagCompoundSerializer());
-    public static final JsonKeyImpl<JsonArray, List<IBlockState>> NON_REPLACEABLE_BLOCKS = key("non_replaceable_blocks", new TypeToken<List<IBlockState>>() {
-
-    }, new NonReplaceableBlocksSerializer());
+    public static final JsonKeyImpl<JsonArray, List<String>> NON_REPLACEABLE_BLOCKS = listKey("non_replaceable_blocks", String.class, new ObjectListSerializer<>(String.class));
     public static final JsonKeyImpl<JsonArray, List<HavokParticle>> PARTICLES = listKey("particles", HavokParticle.class, new ObjectListSerializer<>(HavokParticle.class));
     public static final JsonKeyImpl<JsonPrimitive, Float> PITCH = floatKey("pitch");
     public static final JsonKeyImpl<JsonObject, PlacementSettings> PLACEMENT_SETTINGS = key("placement_settings", TypeToken.get(PlacementSettings.class), new PlacementSettingsSerializer());
     public static final JsonKeyImpl<JsonObject, PlayersCommand> PLAYERS_COMMAND = key("players", TypeToken.get(PlayersCommand.class), new PlayersCommand.Serializer());
     public static final JsonKeyImpl<JsonPrimitive, String> RELATIVE_PATH = stringKey("relative_path");
     public static final JsonKeyImpl<JsonPrimitive, Boolean> REPLACE_UNBREAKABLE_BLOCKS = booleanKey("replace_unbreakable_blocks");
-    public static final JsonKeyImpl<JsonArray, TempHavokRewardsStorage> REWARDS = key("rewards", new TypeToken<TempHavokRewardsStorage>() {
-
-    }, new TempHavokRewardsStorage.Serializer());
+    public static final JsonKeyImpl<JsonArray, TempHavokRewardsStorage> REWARDS = key("rewards", TypeToken.get(TempHavokRewardsStorage.class), new TempHavokRewardsStorage.Serializer());
     public static final JsonKeyImpl<JsonObject, RewardsCommand> REWARDS_COMMAND = key("rewards", TypeToken.get(RewardsCommand.class), new RewardsCommand.Serializer());
     public static final JsonKeyImpl<JsonPrimitive, String> REWARD_NAME = stringKey("reward_name");
     public static final JsonKeyImpl<JsonPrimitive, Rotation> ROTATION = key("rotation", TypeToken.get(Rotation.class), new RotationSerializer());
@@ -120,7 +114,7 @@ public class Keys {
     public static final JsonKeyImpl<JsonPrimitive, String> STRUCTURE_NAME = stringKey("structure_name");
     public static final JsonKeyImpl<JsonPrimitive, Boolean> SUBS_TRIGGER = booleanKey("subs_trigger");
     public static final JsonKeyImpl<JsonPrimitive, Boolean> TARGET_ALL_PLAYERS = booleanKey("target_all_players");
-    public static final JsonKeyImpl<JsonArray, List<String>> TARGET_PLAYERS = listKey("target_players", String.class, new StringListSerializer());
+    public static final JsonKeyImpl<JsonArray, List<String>> TARGET_PLAYERS = listKey("target_players", String.class, new ObjectListSerializer<>(String.class));
     public static final JsonKeyImpl<JsonObject, NBTTagCompound> TILE_ENTITY = key("tile_entity", TypeToken.get(NBTTagCompound.class), new NBTTagCompoundSerializer());
     public static final JsonKeyImpl<JsonPrimitive, String> TMI_TOKEN = stringKey("tmi_token");
     public static final JsonKeyImpl<JsonPrimitive, Boolean> TRIGGERS_SALE = booleanKey("trigger_sale");

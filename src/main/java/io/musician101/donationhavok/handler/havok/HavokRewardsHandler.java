@@ -16,7 +16,9 @@ import java.util.Map;
 import java.util.Map.Entry;
 import java.util.Optional;
 import java.util.TreeMap;
+import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
+import net.minecraft.block.Block;
 import net.minecraft.block.state.IBlockState;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.item.EntityItem;
@@ -27,6 +29,7 @@ import net.minecraft.item.ItemStack;
 import net.minecraft.nbt.NBTTagCompound;
 import net.minecraft.nbt.NBTTagList;
 import net.minecraft.nbt.NBTTagString;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
 import net.minecraftforge.fml.common.FMLCommonHandler;
@@ -179,10 +182,8 @@ public class HavokRewardsHandler {
             boolean generateBook = deserialize(jsonObject, context, Keys.GENERATE_BOOK, true);
             boolean replaceUnbreakableBlocks = deserialize(jsonObject, context, Keys.REPLACE_UNBREAKABLE_BLOCKS, false);
             int delay = deserialize(jsonObject, context, Keys.DELAY, 10);
-            List<IBlockState> nonReplaceableBlocks = deserialize(jsonObject, context, Keys.NON_REPLACEABLE_BLOCKS, Collections.singletonList(Blocks.CHEST.getDefaultState()));
-            //TreeMap<Double, HavokRewards> defaultRewardsMap = new TreeMap<>(Double::compare);
-            //defaultRewardsMap.put(1D, new HavokRewards());
-            //TreeMap<Double, HavokRewards> rewardsMap  = deserialize(jsonObject, context, Keys.REWARDS, defaultRewardsMap);
+            List<IBlockState> nonReplaceableBlocks = deserialize(jsonObject, context, Keys.NON_REPLACEABLE_BLOCKS, Collections.singletonList(Block.REGISTRY.getNameForObject(Blocks.CHEST).toString()))
+                    .stream().map(ResourceLocation::new).map(Block.REGISTRY::getObject).map(Block::getDefaultState).collect(Collectors.toList());
             TreeMap<Double, HavokRewards> rewardsMap = new TreeMap<>(Double::compare);
             rewardsMap.putAll(deserialize(jsonObject, context, Keys.REWARDS, new TempHavokRewardsStorage()).rewards);
             String mcName = deserialize(jsonObject, context, Keys.MC_NAME, "Your Minecraft name here!");
@@ -195,9 +196,8 @@ public class HavokRewardsHandler {
             serialize(jsonObject, context, Keys.DELAY, src.getDelay());
             serialize(jsonObject, context, Keys.GENERATE_BOOK, src.generateBook());
             serialize(jsonObject, context, Keys.MC_NAME, src.getMCName());
-            serialize(jsonObject, context, Keys.NON_REPLACEABLE_BLOCKS, src.getNonReplaceableBlocks());
+            serialize(jsonObject, context, Keys.NON_REPLACEABLE_BLOCKS, src.getNonReplaceableBlocks().stream().map(IBlockState::getBlock).map(Block.REGISTRY::getNameForObject).map(ResourceLocation::toString).collect(Collectors.toList()));
             serialize(jsonObject, context, Keys.REPLACE_UNBREAKABLE_BLOCKS, src.replaceUnbreakableBlocks());
-            //serialize(jsonObject, context, Keys.REWARDS, src.getRewards());
             serialize(jsonObject, context, Keys.REWARDS, new TempHavokRewardsStorage(src.getRewards()));
             return jsonObject;
         }
