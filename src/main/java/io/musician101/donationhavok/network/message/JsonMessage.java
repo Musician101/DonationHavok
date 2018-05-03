@@ -14,7 +14,6 @@ import java.io.IOException;
 import javax.annotation.Nonnull;
 import net.minecraft.client.Minecraft;
 import net.minecraft.entity.player.EntityPlayerMP;
-import net.minecraft.util.text.ChatType;
 import net.minecraft.util.text.Style;
 import net.minecraft.util.text.TextComponentString;
 import net.minecraft.util.text.TextFormatting;
@@ -60,7 +59,7 @@ public class JsonMessage implements IMessage {
             TwitchHandler th = Keys.TWITCH.deserializeFromParent(message.jsonObject).orElse(new TwitchHandler());
             if (ctx.side == Side.CLIENT) {
                 if (BaseGUI.isFrameActive("Donation Havok Configurator")) {
-                    Minecraft.getMinecraft().ingameGUI.addChatMessage(ChatType.CHAT, new TextComponentString("The configurator is already open.").setStyle(new Style().setColor(TextFormatting.RED)));
+                    Minecraft.getMinecraft().player.sendMessage(new TextComponentString("The configurator is already open.").setStyle(new Style().setColor(TextFormatting.RED)));
                 }
                 else {
                     new ConfigGUI(dh, hrh, slh, th, false);
