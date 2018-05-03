@@ -162,7 +162,7 @@ public final class ConfigGUI extends BaseGUI<BaseGUI> {
 
             new DiscoveryGUI(((DiscoveryTableModel) currentDiscoveries.getModel()).getObjectAt(row), ConfigGUI.this, row, false);
         })), gbc(2, 0));
-        panel.add(flowLayoutPanel(parseJButton("Delete", l -> ((DiscoveryTableModel) currentDiscoveries.getModel()).remove(currentDiscoveries.getSelectedRows()))), gbc(3, 0));
+        panel.add(flowLayoutPanel(parseJButton("Delete", l -> ((DiscoveryTableModel) currentDiscoveries.getModel()).remove(currentDiscoveries.getSelectedRow()))), gbc(3, 0));
         return flowLayoutPanel(panel);
     }
 
@@ -285,7 +285,7 @@ public final class ConfigGUI extends BaseGUI<BaseGUI> {
 
             new DiscoveryGUI(((DiscoveryTableModel) legendaryDiscoveries.getModel()).getObjectAt(row), ConfigGUI.this, row, false);
         })), gbc(2, 0));
-        panel.add(flowLayoutPanel(parseJButton("Delete", l -> ((DiscoveryTableModel) legendaryDiscoveries.getModel()).remove(legendaryDiscoveries.getSelectedRows()))), gbc(3, 0));
+        panel.add(flowLayoutPanel(parseJButton("Delete", l -> ((DiscoveryTableModel) legendaryDiscoveries.getModel()).remove(legendaryDiscoveries.getSelectedRow()))), gbc(3, 0));
         return flowLayoutPanel(panel);
     }
 

@@ -29,7 +29,7 @@ public class TableGUI<M extends ListTableModel<T>, T> extends BaseGUI<RewardsGUI
         panel.add(flowLayoutPanel(parseJButton("Edit", e -> getSelectedObject(table, (Class<T>) defaultObject.getClass()).ifPresent(t -> openGUI.accept(t, table.getSelectedRow())))), gbc(2, 0));
         panel.add(flowLayoutPanel(parseJButton("Delete", e -> {
             M model = tableModelClass.cast(table.getModel());
-            model.remove(table.getSelectedRows());
+            model.remove(table.getSelectedRow());
         })), gbc(3, 0));
         return panel;
     }
