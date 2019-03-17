@@ -165,9 +165,7 @@ public class DonationHavok {
             MinecraftForge.EVENT_BUS.register(this.streamLabsHandler);
         }
 
-        if (FMLCommonHandler.instance().getSide().isServer()) {
-            this.twitchHandler.connect();
-        }
+        this.twitchHandler.connect();
     }
 
     @NetworkCheckHandler

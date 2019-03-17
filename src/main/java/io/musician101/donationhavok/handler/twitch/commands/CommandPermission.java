@@ -30,7 +30,9 @@ public enum CommandPermission {
 
         @Override
         public CommandPermission deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            return Stream.of(CommandPermission.values()).filter(permission -> permission == CommandPermission.PRIME_TURBO || permission == CommandPermission.PARTNER || permission == CommandPermission.OWNER).filter(permission -> permission.toString().equalsIgnoreCase(json.getAsString())).findFirst().orElse(CommandPermission.BROADCASTER);
+            return Stream.of(CommandPermission.values())
+                    //.filter(permission -> permission == CommandPermission.PRIME_TURBO || permission == CommandPermission.PARTNER || permission == CommandPermission.OWNER)
+                    .filter(permission -> permission.toString().equalsIgnoreCase(json.getAsString())).findFirst().orElse(CommandPermission.BROADCASTER);
         }
 
         @Override

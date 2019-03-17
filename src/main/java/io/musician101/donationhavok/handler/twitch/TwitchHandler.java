@@ -16,6 +16,7 @@ import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
 import java.lang.reflect.Type;
 import java.util.concurrent.Executors;
 import javax.annotation.Nonnull;
+import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedInEvent;
 import net.minecraftforge.fml.common.gameevent.PlayerEvent.PlayerLoggedOutEvent;
 
@@ -97,7 +98,7 @@ public class TwitchHandler {
         return enabled;
     }
 
-    @Subscribe
+    @SubscribeEvent
     public void playerLoggedIn(PlayerLoggedInEvent event) {
         if (DonationHavok.INSTANCE.getRewardsHandler().getMCName().equals(event.player.getName())) {
             if (enabled) {
@@ -106,7 +107,7 @@ public class TwitchHandler {
         }
     }
 
-    @Subscribe
+    @SubscribeEvent
     public void playerLoggedOut(PlayerLoggedOutEvent event) {
         if (DonationHavok.INSTANCE.getRewardsHandler().getMCName().equals(event.player.getName())) {
             if (enabled) {

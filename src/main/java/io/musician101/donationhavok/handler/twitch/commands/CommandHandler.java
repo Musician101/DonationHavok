@@ -1,7 +1,6 @@
 package io.musician101.donationhavok.handler.twitch.commands;
 
 import io.musician101.donationhavok.DonationHavok;
-import io.musician101.donationhavok.handler.twitch.event.MessageEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -9,6 +8,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
+import java.util.Set;
 import org.apache.logging.log4j.Logger;
 
 public class CommandHandler {
@@ -27,8 +27,7 @@ public class CommandHandler {
         return commandMap;
     }
 
-    public void processCommand(MessageEvent messageEvent) {
-        String message = messageEvent.getMessage().orElse("");
+    public void processCommand(String message, String user, Set<CommandPermission> userPermissions) {
         String commandTrigger = "!";
         String cmdTrigger = message.substring(0, commandTrigger.length());
         String cmdName;
@@ -41,7 +40,7 @@ public class CommandHandler {
             cmdName = message.substring(commandTrigger.length(), message.indexOf(" "));
         }
         else {
-            cmdName = message.substring(commandTrigger.length(), message.length());
+            cmdName = message.substring(commandTrigger.length());
         }
 
         Optional<Command> cmd = getCommand(cmdName);
@@ -53,26 +52,27 @@ public class CommandHandler {
                     return;
                 }
 
-                if (command.hasPermissions(messageEvent)) {
-                    logger.info("Received command {} from user {}.!", message, messageEvent.getUser().orElse(""));
-
-                    cmd.get().executeCommand(messageEvent.getUser().orElse(""), messageEvent.getChannelName().orElse(""), messageEvent.getMessage().map(m -> {
-                        List<String> args = Arrays.asList(m.split(" "));
-                        if (args.isEmpty()) {
-                            return new String[0];
-                        }
-
+                if (command.hasPermissions(userPermissions)) {
+                    logger.info("Received command {} from user {}.!", message, user);
+                    String[] newArgs;
+                    List<String> args = Arrays.asList(message.split(" "));
+                    if (args.isEmpty()) {
+                        newArgs = new String[0];
+                    }
+                    else {
                         List<String> shiftedArgs = new ArrayList<>(args);
                         shiftedArgs.remove(0);
-                        return shiftedArgs.toArray(new String[0]);
-                    }).orElse(new String[0]));
+                        newArgs = shiftedArgs.toArray(new String[0]);
+                    }
+
+                    cmd.get().executeCommand(user, DonationHavok.INSTANCE.getTwitchHandler().getChannelName(), newArgs);
                 }
                 else {
-                    logger.info("Access to command {} denied for user {}! (Missing Permissions)", cmdName, messageEvent.getUser());
+                    logger.info("Access to command {} denied for user {}! (Missing Permissions)", cmdName, user);
                 }
             }
             else {
-                logger.info("Access to command {} denied for user {}.! (Command Disabled)", message, messageEvent.getUser());
+                logger.info("Access to command {} denied for user {}.! (Command Disabled)", message, user);
             }
         }
     }

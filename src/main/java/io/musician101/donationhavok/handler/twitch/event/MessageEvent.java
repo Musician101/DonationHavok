@@ -96,14 +96,14 @@ public class MessageEvent {
 
     private void parsePermissions() {
         if (tags.containsKey("badges")) {
-            Boolean isChannelOwner = tags.containsKey("user-id") && tags.containsKey("room-id") && tags.get("user-id").equals(tags.get("room-id"));
+            boolean isChannelOwner = tags.containsKey("user-id") && tags.containsKey("room-id") && tags.get("user-id").equals(tags.get("room-id"));
 
             if (badges.containsKey("broadcaster") || isChannelOwner) {
                 clientPermissions.add(CommandPermission.BROADCASTER);
                 clientPermissions.add(CommandPermission.MODERATOR);
             }
 
-            if (badges.containsKey("premium")) {
+            if (badges.containsKey("turbo")) {
                 clientPermissions.add(CommandPermission.PRIME_TURBO);
             }
 
@@ -112,7 +112,7 @@ public class MessageEvent {
             }
         }
 
-        if (tags.containsKey("mod") && tags.get("mod").equals("1")) {
+        if (tags.containsKey("moderator") && tags.get("moderator").equals("1")) {
             clientPermissions.add(CommandPermission.MODERATOR);
         }
 

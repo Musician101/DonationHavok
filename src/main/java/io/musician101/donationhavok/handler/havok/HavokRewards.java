@@ -197,7 +197,7 @@ public class HavokRewards {
             }
 
             if (allowTargetViaNote && note.contains("@")) {
-                List<String> userNames = Arrays.stream(note.split("@")).filter(string -> string.contains("@")).map(username -> username.replace("@", "")).collect(Collectors.toList());
+                List<String> userNames = Arrays.stream(note.split("@")).filter(string -> string.contains("@")).map(username -> username.replace("@", "").substring(0, username.indexOf(' '))).collect(Collectors.toList());
                 List<EntityPlayer> targetPlayers = new ArrayList<>();
                 userNames.forEach(username -> {
                     EntityPlayer targetPlayer = playerList.getPlayerByUsername(username);
@@ -210,7 +210,7 @@ public class HavokRewards {
             }
 
             Optional<EntityPlayer> player = DonationHavok.INSTANCE.getRewardsHandler().getPlayer();
-            return player.isPresent() ? Collections.singletonList(player.get()) : Collections.emptyList();
+            return player.map(Collections::singletonList).orElse(Collections.emptyList());
         }
 
         return Collections.singletonList(Minecraft.getMinecraft().player);
@@ -316,7 +316,6 @@ public class HavokRewards {
         });
     }
 
-    //TODO left off here. implementing sales
     public static class Serializer extends BaseSerializer<HavokRewards> {
 
         @Override

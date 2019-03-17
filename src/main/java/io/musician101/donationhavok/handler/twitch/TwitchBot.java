@@ -1,7 +1,6 @@
 package io.musician101.donationhavok.handler.twitch;
 
 import io.musician101.donationhavok.DonationHavok;
-import io.musician101.donationhavok.Reference;
 import io.musician101.donationhavok.handler.havok.HavokRewardsHandler;
 import io.musician101.donationhavok.handler.twitch.commands.CommandHandler;
 import io.musician101.donationhavok.handler.twitch.event.Cheer;
@@ -45,7 +44,6 @@ public final class TwitchBot implements Runnable {
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer.write("PASS @TOKEN@ \r\n");
             writer.write("NICK DonationHavokBot\r\n");
-            writer.write("USER " + Reference.MOD_NAME + "-" + Reference.VERSION + " \r\n");
             writer.write("CAP REQ :twitch.tv/tags \r\n");
             writer.write("CAP REQ :twitch.tv/commands \r\n");
             writer.write("CAP REQ :twitch.tv/membership \r\n");
@@ -91,22 +89,31 @@ public final class TwitchBot implements Runnable {
         String commandType = event.getCommandType();
         if (commandType.equals("USERNOTICE") && tags.containsKey("msg-id")) {
             String msgId = tags.get("msg-id");
-            if ((msgId.equals("sub") || msgId.equals("resub")) && listenForSubs) {
-                String channel = event.getChannelName().orElse("");
-                String user = event.getTagValue("display-name").orElse("");
-                SubPlan subPlan = event.getTagValue("msg-param-sub-plan").flatMap(SubPlan::fromString).orElse(SubPlan.UNKNOWN);
-                boolean isResub = event.getTagValue("msg-id").filter(id -> id.equalsIgnoreCase("resub")).isPresent();
-                int streak = event.getTagValue("msg-param-months").map(s -> {
-                    try {
-                        return Integer.parseInt(s);
-                    }
-                    catch (NumberFormatException e) {
-                        return 1;
-                    }
-                }).filter(i -> i > 0).orElse(1);
+            if (listenForSubs) {
+                switch (msgId) {
+                    case "sub":
+                    case "resub":
+                    case "anonsubgift":
+                    case "submysterygift":
+                    case "giftpaidupgrade":
+                    case "rewardgift":
+                    case "anongiftpaidupgrade":
+                        String channel = event.getChannelName().orElse("");
+                        String user = event.getTagValue("display-name").orElse("");
+                        SubPlan subPlan = event.getTagValue("msg-param-sub-plan").flatMap(SubPlan::fromString).orElse(SubPlan.UNKNOWN);
+                        boolean isResub = event.getTagValue("msg-id").filter(id -> id.equalsIgnoreCase("resub")).isPresent();
+                        int streak = event.getTagValue("msg-param-months").map(s -> {
+                            try {
+                                return Integer.parseInt(s);
+                            }
+                            catch (NumberFormatException e) {
+                                return 1;
+                            }
+                        }).filter(i -> i > 0).orElse(1);
 
-                Subscription subscription = new Subscription(channel, user, subPlan, isResub, streak, event.getMessage().orElse(""));
-                runSubscription(subscription);
+                        Subscription subscription = new Subscription(channel, user, subPlan, isResub, streak, event.getMessage().orElse(""));
+                        runSubscription(subscription);
+                }
             }
         }
         else if (event.getCommandType().equals("PRIVMSG")) {
@@ -125,9 +132,8 @@ public final class TwitchBot implements Runnable {
                 Cheer cheer = new Cheer(channel, user, bits, message);
                 runCheer(cheer);
             }
-            else if (event.getMessage().filter(m -> m.startsWith("!")).isPresent()) {
-                commandHandler.processCommand(event);
-            }
+
+            event.getMessage().filter(m -> m.startsWith("!")).ifPresent(m -> commandHandler.processCommand(m, event.getTagValue("display-name").orElse(""), event.getPermissions()));
         }
     }
 
@@ -205,7 +211,7 @@ public final class TwitchBot implements Runnable {
 
     public void sendMessage(Object message, String channel) {
         try {
-            writer.write("PRIVMSG " + channel + " :" + message.toString() + "\r\n");
+            writer.write("PRIVMSG #" + channel + " :" + message.toString() + "\r\n");
             writer.flush();
         }
         catch (IOException e) {
@@ -241,7 +247,7 @@ public final class TwitchBot implements Runnable {
         String line;
         stopped = false;
         try {
-            while ((line = reader.readLine()) != null && !stopped) {
+            while ((line = reader.readLine()) != null) {
                 if (line.contains("PING :tmi.twitch.tv")) {
                     logger.debug("> PING");
                     logger.debug("< PONG " + line.substring(5));
@@ -259,6 +265,10 @@ public final class TwitchBot implements Runnable {
                     logger.debug("> " + line);
                     MessageEvent event = new MessageEvent(line);
                     handleEvent(event);
+                }
+
+                if (stopped) {
+                    break;
                 }
             }
         }
