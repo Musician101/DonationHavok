@@ -99,38 +99,36 @@ public class StreamLabsHandler {
     public void serverTick(ServerTickEvent event) {
         if (ticksSinceLastRun == delay) {
             DonationHavok instance = DonationHavok.INSTANCE;
-            instance.getRewardsHandler().getPlayer().ifPresent(player -> {
-                JsonArray donations;
+            JsonArray donations;
+            try {
+                donations = getDonations();
+            }
+            catch (IOException e) {
+                instance.getLogger().warn("Did you forget or mistype your access token?");
+                instance.getLogger().warn(e.getMessage().replace(accessToken, "<STREAM_LABS_ACCESS_TOKEN>"));
+                return;
+            }
+
+            List<Donation> parsedDonations = new ArrayList<>();
+            for (JsonElement donation : donations) {
                 try {
-                    donations = getDonations();
-                }
-                catch (IOException e) {
-                    instance.getLogger().warn("Did you forget or mistype your access token?");
-                    instance.getLogger().warn(e.getMessage().replace(accessToken, "<STREAM_LABS_ACCESS_TOKEN>"));
-                    return;
-                }
-
-                List<Donation> parsedDonations = new ArrayList<>();
-                for (JsonElement donation : donations) {
-                    try {
-                        JsonObject donationJsonObject = donation.getAsJsonObject();
-                        long donationTime = dateFormat.parse(donationJsonObject.get("created_at").getAsString()).getTime();
-                        if (donationTime > lastDonationTime) {
-                            double amount = donationJsonObject.get("amount").getAsDouble();
-                            String amountLabel = donationJsonObject.get("amount_label").getAsString();
-                            String name = donationJsonObject.getAsJsonObject("donator").get("name").getAsString();
-                            String note = donationJsonObject.has("message") ? donationJsonObject.get("message").getAsString() : "";
-                            parsedDonations.add(new Donation(name, amount, amountLabel, note));
-                            lastDonationTime = donationTime;
-                        }
-                    }
-                    catch (ParseException e) {
-                        e.printStackTrace();
+                    JsonObject donationJsonObject = donation.getAsJsonObject();
+                    long donationTime = dateFormat.parse(donationJsonObject.get("created_at").getAsString()).getTime();
+                    if (donationTime > lastDonationTime) {
+                        double amount = donationJsonObject.get("amount").getAsDouble();
+                        String amountLabel = donationJsonObject.get("amount_label").getAsString();
+                        String name = donationJsonObject.getAsJsonObject("donator").get("name").getAsString();
+                        String note = donationJsonObject.has("message") ? donationJsonObject.get("message").getAsString() : "";
+                        parsedDonations.add(new Donation(name, amount, amountLabel, note));
+                        lastDonationTime = donationTime;
                     }
                 }
+                catch (ParseException e) {
+                    e.printStackTrace();
+                }
+            }
 
-                parsedDonations.forEach(this::runDonation);
-            });
+            instance.getRewardsHandler().getPlayer().ifPresent(player -> parsedDonations.forEach(this::runDonation));
             ticksSinceLastRun = 0;
         }
         else {

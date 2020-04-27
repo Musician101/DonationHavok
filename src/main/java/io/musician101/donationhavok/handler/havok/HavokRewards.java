@@ -19,7 +19,6 @@ import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
-import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import net.minecraft.client.Minecraft;
@@ -197,20 +196,10 @@ public class HavokRewards {
             }
 
             if (allowTargetViaNote && note.contains("@")) {
-                List<String> userNames = Arrays.stream(note.split("@")).filter(string -> string.contains("@")).map(username -> username.replace("@", "").substring(0, username.indexOf(' '))).collect(Collectors.toList());
-                List<EntityPlayer> targetPlayers = new ArrayList<>();
-                userNames.forEach(username -> {
-                    EntityPlayer targetPlayer = playerList.getPlayerByUsername(username);
-                    if (targetPlayer != null && targetPlayers.stream().map(EntityPlayer::getUniqueID).collect(Collectors.toList()).contains(targetPlayer.getUniqueID())) {
-                        targetPlayers.add(targetPlayer);
-                    }
-                });
-
-                return targetPlayers;
+                return Arrays.stream(note.split(" ")).filter(s -> s.contains("@")).map(s -> s.replaceAll("[^a-zA-Z0-9]", "")).map(playerList::getPlayerByUsername).filter(Objects::nonNull).collect(Collectors.toList());
             }
 
-            Optional<EntityPlayer> player = DonationHavok.INSTANCE.getRewardsHandler().getPlayer();
-            return player.map(Collections::singletonList).orElse(Collections.emptyList());
+            return DonationHavok.INSTANCE.getRewardsHandler().getPlayer().map(Collections::singletonList).orElse(Collections.emptyList());
         }
 
         return Collections.singletonList(Minecraft.getMinecraft().player);

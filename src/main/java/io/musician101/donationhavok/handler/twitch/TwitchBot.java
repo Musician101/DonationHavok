@@ -27,6 +27,7 @@ public final class TwitchBot implements Runnable {
     private BufferedReader reader;
     private boolean stopped = true;
     private BufferedWriter writer;
+    private Socket socket;
 
     TwitchBot(String streamerName) {
         this.streamerName = streamerName;
@@ -39,7 +40,7 @@ public final class TwitchBot implements Runnable {
 
         Logger logger = DonationHavok.INSTANCE.getLogger();
         try {
-            @SuppressWarnings("resource") Socket socket = new Socket("irc.twitch.tv", 6667);
+            socket = new Socket("irc.twitch.tv", 6667);
             writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
             writer.write("PASS @TOKEN@ \r\n");
@@ -67,6 +68,10 @@ public final class TwitchBot implements Runnable {
 
     public void disconnect() {
         try {
+            if (socket != null) {
+                socket.close();
+            }
+
             if (reader != null) {
                 reader.close();
             }
@@ -93,11 +98,13 @@ public final class TwitchBot implements Runnable {
                 switch (msgId) {
                     case "sub":
                     case "resub":
+                    case "subgift":
                     case "anonsubgift":
                     case "submysterygift":
                     case "giftpaidupgrade":
                     case "rewardgift":
                     case "anongiftpaidupgrade":
+                    case "primepaidupgrade":
                         String channel = event.getChannelName().orElse("");
                         String user = event.getTagValue("display-name").orElse("");
                         SubPlan subPlan = event.getTagValue("msg-param-sub-plan").flatMap(SubPlan::fromString).orElse(SubPlan.UNKNOWN);
@@ -190,10 +197,10 @@ public final class TwitchBot implements Runnable {
             int streak = subscription.getStreak();
             switch (subscription.getSubPlan()) {
                 case TIER_2:
-                    amount = Math.max(roundSubs ? 10 : 9.99, (roundSubs ? 10 : 9.99) * (factorSubStreak ? 1 : streak / 2));
+                    amount = Math.max(roundSubs ? 10 : 9.99, (roundSubs ? 10 : 9.99) * (factorSubStreak ? 1 : streak / 2D));
                     break;
                 case TIER_3:
-                    amount = Math.max(roundSubs ? 25 : 24.99, (roundSubs ? 25 : 24.99) * (factorSubStreak ? 1 : streak / 6));
+                    amount = Math.max(roundSubs ? 25 : 24.99, (roundSubs ? 25 : 24.99) * (factorSubStreak ? 1 : streak / 6D));
                     break;
                 default:
                     amount = Math.max(roundSubs ? 5 : 4.99, (roundSubs ? 5 : 4.99) * (factorSubStreak ? 1 : streak));
