@@ -1,6 +1,7 @@
 package io.musician101.donationhavok.handler.twitch.commands;
 
 import io.musician101.donationhavok.DonationHavok;
+import io.musician101.donationhavok.handler.twitch.event.MessageEvent;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
@@ -8,7 +9,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 import java.util.Optional;
-import java.util.Set;
 import org.apache.logging.log4j.Logger;
 
 public class CommandHandler {
@@ -27,7 +27,8 @@ public class CommandHandler {
         return commandMap;
     }
 
-    public void processCommand(String message, String user, Set<CommandPermission> userPermissions) {
+    public void processCommand(MessageEvent messageEvent) {
+        String message = messageEvent.getMessage().orElse("");
         String commandTrigger = "!";
         String cmdTrigger = message.substring(0, commandTrigger.length());
         String cmdName;
@@ -40,45 +41,44 @@ public class CommandHandler {
             cmdName = message.substring(commandTrigger.length(), message.indexOf(" "));
         }
         else {
-            cmdName = message.substring(commandTrigger.length());
+            cmdName = message.substring(commandTrigger.length(), message.length());
         }
 
         Optional<Command> cmd = getCommand(cmdName);
         if (cmd.isPresent()) {
             Command command = cmd.get();
-            Logger logger = DonationHavok.INSTANCE.getLogger();
+            Logger logger = DonationHavok.getInstance().getLogger();
             if (command.getEnabled()) {
                 if (!cmdTrigger.equals(commandTrigger) && !cmdTrigger.equals("")) {
                     return;
                 }
 
-                if (command.hasPermissions(userPermissions)) {
-                    logger.info("Received command {} from user {}.!", message, user);
-                    String[] newArgs;
-                    List<String> args = Arrays.asList(message.split(" "));
-                    if (args.isEmpty()) {
-                        newArgs = new String[0];
-                    }
-                    else {
+                if (command.hasPermissions(messageEvent)) {
+                    logger.info("Received command {} from user {}.!", message, messageEvent.getUser().orElse(""));
+
+                    cmd.get().executeCommand(messageEvent.getUser().orElse(""), messageEvent.getChannelName().orElse(""), messageEvent.getMessage().map(m -> {
+                        List<String> args = Arrays.asList(m.split(" "));
+                        if (args.isEmpty()) {
+                            return new String[0];
+                        }
+
                         List<String> shiftedArgs = new ArrayList<>(args);
                         shiftedArgs.remove(0);
-                        newArgs = shiftedArgs.toArray(new String[0]);
-                    }
-
-                    cmd.get().executeCommand(user, DonationHavok.INSTANCE.getTwitchHandler().getChannelName(), newArgs);
+                        return shiftedArgs.toArray(new String[0]);
+                    }).orElse(new String[0]));
                 }
                 else {
-                    logger.info("Access to command {} denied for user {}! (Missing Permissions)", cmdName, user);
+                    logger.info("Access to command {} denied for user {}! (Missing Permissions)", cmdName, messageEvent.getUser());
                 }
             }
             else {
-                logger.info("Access to command {} denied for user {}.! (Command Disabled)", message, user);
+                logger.info("Access to command {} denied for user {}.! (Command Disabled)", message, messageEvent.getUser());
             }
         }
     }
 
     public void registerCommand(Command command) {
-        Logger logger = DonationHavok.INSTANCE.getLogger();
+        Logger logger = DonationHavok.getInstance().getLogger();
         if (getCommandMap().containsKey(command.getCommand())) {
             logger.error("Can't register Command! {}! Error: Command was already registered!", command.getCommand());
             return;

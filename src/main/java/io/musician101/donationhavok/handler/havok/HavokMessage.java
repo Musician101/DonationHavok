@@ -7,17 +7,17 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import io.musician101.donationhavok.util.json.Keys;
 import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
-import io.musician101.donationhavok.util.json.adapter.TypeOf;
 import java.lang.reflect.Type;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
-import net.minecraft.util.text.TextComponentString;
-import net.minecraftforge.fml.server.FMLServerHandler;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.LogicalSidedProvider;
 
 import static io.musician101.donationhavok.util.json.Keys.MESSAGE;
 
-@TypeOf(HavokMessage.Serializer.class)
 public class HavokMessage extends Havok {
 
     private final boolean broadcast;
@@ -26,7 +26,7 @@ public class HavokMessage extends Havok {
     public HavokMessage() {
         super(0);
         this.broadcast = true;
-        this.message = new TextComponentString("Hey look, a default message :D");
+        this.message = new StringTextComponent("Hey look, a default message :D");
     }
 
     public HavokMessage(int delay, boolean broadcast, ITextComponent message) {
@@ -44,15 +44,8 @@ public class HavokMessage extends Havok {
     }
 
     @Override
-    public void wreak(EntityPlayer player, BlockPos originalPos) {
-        wreak("HavokMessage-Delay:" + getDelay(), () -> {
-            if (broadcast && !player.getEntityWorld().isRemote) {
-                FMLServerHandler.instance().getServer().getPlayerList().sendMessage(message, false);
-            }
-            else {
-                player.sendMessage(message);
-            }
-        });
+    public void wreak(PlayerEntity player, BlockPos originalPos) {
+        wreak("HavokMessage-Delay:" + getDelay(), () -> LogicalSidedProvider.WORKQUEUE.<MinecraftServer>get(LogicalSide.SERVER).getPlayerList().sendMessage(message, false));
     }
 
     public static class Serializer extends BaseSerializer<HavokMessage> {

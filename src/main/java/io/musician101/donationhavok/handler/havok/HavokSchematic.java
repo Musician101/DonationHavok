@@ -6,58 +6,63 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import io.musician101.donationhavok.DonationHavok;
+import io.musician101.donationhavok.Reference;
 import io.musician101.donationhavok.util.json.Keys;
 import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
-import io.musician101.donationhavok.util.json.adapter.TypeOf;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.lang.reflect.Type;
 import java.nio.file.Files;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
+import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.IntStream;
+import java.util.stream.Stream;
 import javax.annotation.Nonnull;
-import net.minecraft.block.Block;
-import net.minecraft.block.state.IBlockState;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Blocks;
+import net.minecraft.block.BlockState;
+import net.minecraft.command.arguments.BlockStateParser;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.CompoundNBT;
 import net.minecraft.nbt.CompressedStreamTools;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.nbt.NBTTagList;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.tileentity.TileEntity;
-import net.minecraft.util.EnumFacing;
+import net.minecraft.util.Direction;
+import net.minecraft.util.Direction.Axis;
 import net.minecraft.util.Rotation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.math.Vec3i;
 import net.minecraft.world.World;
 import net.minecraftforge.common.util.Constants.NBT;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.LogicalSidedProvider;
+import org.apache.logging.log4j.Logger;
 
-/**
- * @deprecated This will most likely break when 1.13 hits.
- */
-@Deprecated
-@TypeOf(HavokSchematic.Serializer.class)
 public class HavokSchematic extends HavokIntegerOffset {
 
     @Nonnull
     private final String relativePath;
 
     public HavokSchematic() {
-        this(0, 0, 0, 0, "quack.schematic");
-        File file = new File(DonationHavok.INSTANCE.getConfigDir(), "quack.schematic");
+        this(0, 0, 0, 0, "quack.schem");
+        File file = new File("config/" + Reference.MOD_ID + "/quack.schem");
         if (file.exists()) {
             return;
         }
 
         try {
-            Files.copy(getClass().getClassLoader().getResourceAsStream("quack.schematic"), file.toPath());
+            Files.copy(ClassLoader.getSystemClassLoader().getResourceAsStream("quack.schem"), file.toPath());
         }
         catch (IOException e) {
-            DonationHavok.INSTANCE.getLogger().warn("Failed to save " + relativePath + ".");
+            DonationHavok.getInstance().getLogger().warn("Failed to save " + relativePath + ".");
         }
     }
 
@@ -71,7 +76,7 @@ public class HavokSchematic extends HavokIntegerOffset {
         return relativePath;
     }
 
-    private Rotation getRotation(EnumFacing direction) {
+    private Rotation getRotation(Direction direction) {
         switch (direction) {
             case WEST:
                 return Rotation.CLOCKWISE_90;
@@ -84,15 +89,15 @@ public class HavokSchematic extends HavokIntegerOffset {
         }
     }
 
-    private NBTTagCompound getTileEntity(int x, int y, int z, NBTTagList tileEntities) {
-        for (int i = 0; i < tileEntities.tagCount(); i++) {
-            NBTTagCompound nbt = tileEntities.getCompoundTagAt(i);
-            if (nbt.getInteger("x") == x && nbt.getInteger("y") == y && nbt.getInteger("z") == z) {
+    private CompoundNBT getTileEntity(int x, int y, int z, ListNBT tileEntities) {
+        for (int i = 0; i < tileEntities.size(); i++) {
+            CompoundNBT nbt = tileEntities.getCompound(i);
+            if (nbt.getInt("x") == x && nbt.getInt("y") == y && nbt.getInt("z") == z) {
                 return nbt;
             }
         }
 
-        return new NBTTagCompound();
+        return new CompoundNBT();
     }
 
     private Vec3i rotateDimensions(Rotation rotation, int width, int height, int length) {
@@ -131,73 +136,108 @@ public class HavokSchematic extends HavokIntegerOffset {
     }
 
     @Override
-    public void wreak(EntityPlayer player, BlockPos originalPos) {
-        NBTTagCompound schematic;
-        try (FileInputStream input = new FileInputStream(new File(DonationHavok.INSTANCE.getConfigDir(), relativePath))) {
+    public void wreak(PlayerEntity player, BlockPos originalPos) {
+        Logger logger = DonationHavok.getInstance().getLogger();
+        CompoundNBT schematic;
+        try (FileInputStream input = new FileInputStream(new File("config/" + Reference.MOD_ID + "/" + relativePath))) {
             schematic = CompressedStreamTools.readCompressed(input);
         }
         catch (IOException e) {
-            DonationHavok.INSTANCE.getLogger().warn(relativePath + " failed to load.");
+            logger.warn(relativePath + " failed to load.");
             return;
         }
 
-        if (schematic.getSize() == 0) {
-            DonationHavok.INSTANCE.getLogger().warn(relativePath + "is empty.");
+        if (schematic.size() == 0) {
+            logger.warn(relativePath + " is empty.");
             return;
         }
 
-        EnumFacing direction = EnumFacing.getDirectionFromEntityLiving(originalPos, player).getOpposite();
+        Optional<Direction> facingOptional = Stream.of(Direction.getFacingDirections(player)).filter(Objects::nonNull).filter(facing -> facing.getAxis() != Axis.Y).findFirst();
+        if (!facingOptional.isPresent()) {
+            logger.error(relativePath + " failed to parse Direction for player " + player.getName());
+            return;
+        }
+
+        Direction direction = facingOptional.get();
         short width = schematic.getShort("Width");
         short height = schematic.getShort("Height");
         short length = schematic.getShort("Length");
         Rotation rotation = getRotation(direction);
         Vec3i rotatedDimensions = rotateDimensions(rotation, width, height, length);
 
-        byte[] blocks = schematic.getByteArray("Blocks");
-        byte[] data = schematic.getByteArray("Data");
-
-        NBTTagList tileEntities = schematic.getTagList("TileEntities", NBT.TAG_COMPOUND);
-
-        int i = 0;
-        short halfLength = (short) (rotatedDimensions.getZ() / 2);
-        short halfWidth = (short) (rotatedDimensions.getX() / 2);
-        World world = FMLCommonHandler.instance().getMinecraftServerInstance().getEntityWorld();
-        List<List<Runnable>> lines = new ArrayList<>();
-        for (int y = 0; y < height; y++) {
-            for (int z = 0; z < length; z++) {
-                List<Runnable> line = new ArrayList<>();
-                for (int x = 0; x < width; x++) {
-                    int j = blocks[i];
-                    if (j < 0) {
-                        j = 128 + (128 + j);
-                    }
-
-                    Block b = Block.getBlockById(j);
-                    if (b != Blocks.AIR) {
-                        IBlockState blockState = b.getStateFromMeta(data[i]);
-                        BlockPos rotatedPos = rotatePos(new BlockPos(x, y, z), rotation, rotatedDimensions);
-                        BlockPos pos = originalPos.add(-(halfWidth - rotatedPos.getX()), rotatedPos.getY(), -(halfLength - rotatedPos.getZ())).add(getXOffset(), getYOffset(), getZOffset());
-                        NBTTagCompound nbt = getTileEntity(x, y, z, tileEntities);
-                        line.add(() -> {
-                            world.playSound(null, pos, b.getSoundType(blockState, world, pos, null).getPlaceSound(), SoundCategory.BLOCKS, 1F, 1F);
-                            world.setBlockState(pos, blockState.withRotation(rotation));
-                            TileEntity tileEntity = b.createTileEntity(world, blockState);
-                            if (tileEntity != null) {
-                                tileEntity.readFromNBT(nbt);
-                                tileEntity.rotate(rotation);
-                                world.setTileEntity(pos, tileEntity);
-                            }
-                        });
-                    }
-
-                    i++;
-                }
-
-                lines.addAll(Lists.partition(line, 10));
-            }
+        int paletteMax = schematic.getInt("PaletteMax");
+        CompoundNBT paletteNBT = schematic.getCompound("Palette");
+        if (paletteMax != paletteNBT.size()) {
+            logger.warn(relativePath + " PaletteMax does not match actual palette size.");
+            return;
         }
 
-        wreak("HavokSchematicDelay:" + getDelay(), () -> IntStream.range(0, lines.size()).forEach(j -> DonationHavok.INSTANCE.getScheduler().scheduleTask("HavokSchematicPartDelay:" + j, j, () -> lines.get(j).forEach(Runnable::run))));
+        Map<Integer, BlockState> palette = new HashMap<>();
+        for (String part : paletteNBT.keySet()) {
+            int id = paletteNBT.getInt(part);
+            BlockStateParser parser = new BlockStateParser(new StringReader(part), true);
+            try {
+                parser.readBlock();
+            }
+            catch (CommandSyntaxException e) {
+                logger.warn(relativePath + " contains invalid BlockState: " + part);
+                return;
+            }
+
+            BlockState blockState = parser.getState();
+            palette.put(id, blockState);
+        }
+
+        byte[] blockData = schematic.getByteArray("BlockData");
+        ListNBT tileEntities = schematic.getList("TileEntities", NBT.TAG_COMPOUND);
+        int index = 0;
+        int i = 0;
+        int value;
+        int varIntLength;
+        short halfLength = (short) (rotatedDimensions.getZ() / 2);
+        short halfWidth = (short) (rotatedDimensions.getX() / 2);
+        World world = LogicalSidedProvider.WORKQUEUE.<MinecraftServer>get(LogicalSide.SERVER).getWorld(player.dimension);
+        List<Runnable> blocks = new ArrayList<>();
+        while (i < blockData.length) {
+            value = 0;
+            varIntLength = 0;
+            while (true) {
+                value |= (blockData[i] & 127) << (varIntLength++ * 7);
+                if (varIntLength > 5) {
+                    logger.warn(relativePath + " possibly contains corrupted data");
+                    return;
+                }
+
+                if ((blockData[i] & 128) != 128) {
+                    i++;
+                    break;
+                }
+                i++;
+            }
+
+            int x = (index % (width * length)) % width;
+            int y = index / (width * length);
+            int z = (index % (width * length)) / width;
+            BlockState blockState = palette.get(value);
+            BlockPos rotatedPos = rotatePos(new BlockPos(x, y, z), rotation, rotatedDimensions);
+            BlockPos pos = originalPos.add(-(halfWidth - rotatedPos.getX()), rotatedPos.getY(), -(halfLength - rotatedPos.getZ())).add(getXOffset(), getYOffset(), getZOffset());
+            CompoundNBT nbt = getTileEntity(x, y, z, tileEntities);
+            blocks.add(() -> {
+                world.playSound(null, pos, blockState.getSoundType(world, pos, null).getPlaceSound(), SoundCategory.MASTER, 1F, 1F);
+                world.setBlockState(pos, blockState.rotate(world, pos, rotation));
+                TileEntity tileEntity = blockState.createTileEntity(world);
+                if (tileEntity != null) {
+                    tileEntity.read(nbt);
+                    tileEntity.rotate(rotation);
+                    world.setTileEntity(pos, tileEntity);
+                }
+            });
+            index++;
+        }
+
+
+        List<List<Runnable>> lines = Lists.partition(blocks, 10);
+        wreak("HavokSchematicDelay:" + getDelay(), () -> IntStream.range(0, lines.size()).forEach(j -> DonationHavok.getInstance().getScheduler().scheduleTask("HavokSchematicPartDelay:" + j, j, () -> lines.get(j).forEach(Runnable::run))));
     }
 
     public static class Serializer extends BaseSerializer<HavokSchematic> {
@@ -205,7 +245,7 @@ public class HavokSchematic extends HavokIntegerOffset {
         @Override
         public HavokSchematic deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
             JsonObject jsonObject = json.getAsJsonObject();
-            String relativePath = deserialize(jsonObject, context, Keys.RELATIVE_PATH, "quack.schematic");
+            String relativePath = deserialize(jsonObject, context, Keys.RELATIVE_PATH, "quack.schem");
             int delay = deserialize(jsonObject, context, Keys.DELAY, 0);
             int xOffset = deserialize(jsonObject, context, Keys.X_OFFSET_INT, 0);
             int yOffset = deserialize(jsonObject, context, Keys.Y_OFFSET_INT, 0);

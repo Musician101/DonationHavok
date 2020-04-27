@@ -1,51 +1,59 @@
 package io.musician101.donationhavok;
 
-import io.musician101.donationhavok.command.DHCommand;
-import io.musician101.donationhavok.handler.StreamLabsHandler;
+import com.google.gson.JsonPrimitive;
+import io.musician101.donationhavok.command.DHCommands;
+import io.musician101.donationhavok.config.Config;
+import io.musician101.donationhavok.handler.StreamlabsHandler;
 import io.musician101.donationhavok.handler.discovery.DiscoveryHandler;
-import io.musician101.donationhavok.handler.havok.HavokRewardsHandler;
 import io.musician101.donationhavok.handler.twitch.TwitchHandler;
 import io.musician101.donationhavok.network.Network;
 import io.musician101.donationhavok.scheduler.Scheduler;
-import io.musician101.donationhavok.util.json.JsonKeyProcessor;
+import io.musician101.donationhavok.util.json.Keys;
 import java.io.File;
-import java.io.FileReader;
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
 import javax.annotation.Nonnull;
+import net.minecraft.command.arguments.BlockStateParser;
 import net.minecraftforge.common.MinecraftForge;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.common.Mod;
-import net.minecraftforge.fml.common.Mod.EventHandler;
-import net.minecraftforge.fml.common.Mod.Instance;
-import net.minecraftforge.fml.common.event.FMLPostInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLPreInitializationEvent;
-import net.minecraftforge.fml.common.event.FMLServerStartingEvent;
-import net.minecraftforge.fml.common.event.FMLServerStoppingEvent;
-import net.minecraftforge.fml.common.network.NetworkCheckHandler;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.fml.event.lifecycle.FMLCommonSetupEvent;
+import net.minecraftforge.fml.event.lifecycle.FMLLoadCompleteEvent;
+import net.minecraftforge.fml.event.server.FMLServerStartingEvent;
+import net.minecraftforge.fml.event.server.FMLServerStoppingEvent;
+import net.minecraftforge.fml.javafmlmod.FMLJavaModLoadingContext;
+import net.minecraftforge.registries.ForgeRegistries;
+import net.minecraftforge.registries.ForgeRegistry;
+import net.minecraftforge.registries.RegistryManager;
+import org.apache.logging.log4j.LogManager;
 import org.apache.logging.log4j.Logger;
 
-import static io.musician101.donationhavok.util.json.JsonKeyProcessor.GSON;
+@Mod(value = Reference.MOD_ID)
+public final class DonationHavok {
 
-@Mod(modid = Reference.MOD_ID, name = Reference.MOD_NAME, version = Reference.VERSION, useMetadata = true)
-public class DonationHavok {
-
-    @Instance(Reference.MOD_ID)
-    public static DonationHavok INSTANCE;
-    private File configDir;
-    private File configFile;
+    private Config config;
     private DiscoveryHandler discoveryHandler;
-    private HavokRewardsHandler havokRewardsHandler;
-    private Logger logger;
-    private Scheduler scheduler;
-    private StreamLabsHandler streamLabsHandler;
-    private TwitchHandler twitchHandler;
+    private final Logger logger = LogManager.getLogger(Reference.MOD_ID);
+    private final Scheduler scheduler = new Scheduler();
+    @Nonnull
+    private final StreamlabsHandler streamLabsHandler = new StreamlabsHandler();
+    @Nonnull
+    private final TwitchHandler twitchHandler = new TwitchHandler();
+
+    public DonationHavok() {
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::preInit);
+        FMLJavaModLoadingContext.get().getModEventBus().addListener(this::postInit);
+        MinecraftForge.EVENT_BUS.addListener(this::onServerStart);
+        MinecraftForge.EVENT_BUS.addListener(this::onServerStop);
+    }
+
+    public static DonationHavok getInstance() {
+        return ModList.get().<DonationHavok>getModObjectById(Reference.MOD_ID).orElseThrow(() -> new IllegalStateException("Mod " + Reference.MOD_ID + " does not exist."));
+    }
 
     @Nonnull
-    public File getConfigDir() {
-        return configDir;
+    public Config getConfig() {
+        return config;
     }
 
     @Nonnull
@@ -58,122 +66,74 @@ public class DonationHavok {
         return logger;
     }
 
-    @Nonnull
-    public HavokRewardsHandler getRewardsHandler() {
-        return havokRewardsHandler;
-    }
-
     public Scheduler getScheduler() {
         return scheduler;
     }
 
-    @Nonnull
-    public StreamLabsHandler getStreamLabsHandler() {
-        return streamLabsHandler;
-    }
-
-    @Nonnull
-    public TwitchHandler getTwitchHandler() {
-        return twitchHandler;
-    }
-
-    @EventHandler
-    public void onServerStart(FMLServerStartingEvent event) {
-        scheduler = new Scheduler();
+    private void onServerStart(FMLServerStartingEvent event) {
+        MinecraftForge.EVENT_BUS.register(twitchHandler);
         MinecraftForge.EVENT_BUS.register(scheduler);
+        MinecraftForge.EVENT_BUS.register(streamLabsHandler);
         twitchHandler.connect();
-        event.registerServerCommand(new DHCommand());
+        event.getCommandDispatcher().register(DHCommands.dh());
     }
 
-    @EventHandler
-    public void onServerStop(FMLServerStoppingEvent event) {
+    private void onServerStop(FMLServerStoppingEvent event) {
         twitchHandler.disconnect();
         scheduler.purge();
+        MinecraftForge.EVENT_BUS.unregister(twitchHandler);
+        MinecraftForge.EVENT_BUS.unregister(scheduler);
+        MinecraftForge.EVENT_BUS.unregister(streamLabsHandler);
     }
 
-    @EventHandler
-    public void postInit(FMLPostInitializationEvent event) {
+    private void postInit(FMLLoadCompleteEvent event) {
+        config = new Config();
+        generateConfiguratorFiles();
+    }
+
+    private void generateConfiguratorFiles() {
+        File dir = new File("config/" + Reference.MOD_ID, "configurator");
+        dir.mkdirs();
+        RegistryManager.getRegistryNamesForSyncToClient().forEach(name -> {
+            File file = new File(dir, name.toString().replace(":", "_") + ".json");
+            try {
+                if (!file.exists()) {
+                    file.createNewFile();
+                }
+
+                ForgeRegistry<?> forgeRegistry = RegistryManager.ACTIVE.getRegistry(name);
+                FileWriter fw = new FileWriter(file);
+                Keys.GSON.toJson(forgeRegistry.getKeys().stream().map(entry -> new JsonPrimitive(entry.toString())).collect(Keys.jsonArrayCollector()), fw);
+                fw.close();
+            }
+            catch (IOException e) {
+                logger.error("An error occurred while trying to save \"" + file.getPath() + "\"", e);
+            }
+        });
+
+        File file = new File(dir, "block_states.json");
         try {
-            reload();
+            if (!file.exists()) {
+                file.createNewFile();
+            }
+
+            FileWriter fw = new FileWriter(file);
+            Keys.GSON.toJson(ForgeRegistries.BLOCKS.getValues().stream().map(value -> new JsonPrimitive(BlockStateParser.toString(value.getDefaultState()))).collect(Keys.jsonArrayCollector()), fw);
+            fw.close();
         }
-        catch (Exception e) {
-            logger.warn("There was an issue loading the config. No rewards for you :c", e);
+        catch (IOException e) {
+            logger.error("An error occurred while trying to save \"" + file.getPath() + "\"", e);
         }
     }
 
-    @EventHandler
-    public void preInit(FMLPreInitializationEvent event) {
-        logger = event.getModLog();
-        configDir = event.getSuggestedConfigurationFile().getParentFile();
-        configFile = new File(configDir, "donation_havok.json");
-        MinecraftForge.EVENT_BUS.register(new DisconnectListener());
+    private void preInit(FMLCommonSetupEvent event) {
         Network.init();
-        JsonKeyProcessor.init();
+        discoveryHandler = DiscoveryHandler.load();
         logger.info("\\_o<");
     }
 
-    public void reload() throws IOException {
-        if (!configFile.exists()) {
-            configDir.mkdirs();
-            configFile.createNewFile();
-            FileWriter fileWriter = new FileWriter(configFile);
-            GSON.toJson(new Config(), fileWriter);
-            fileWriter.close();
-        }
-
-        if (streamLabsHandler != null) {
-            MinecraftForge.EVENT_BUS.unregister(streamLabsHandler);
-        }
-
-        FileReader fileReader = new FileReader(configFile);
-        Config config = GSON.fromJson(fileReader, Config.class);
-        fileReader.close();
-        discoveryHandler = config.getDiscoveryHandler();
-        havokRewardsHandler = config.getHavokRewardsHandler();
-        streamLabsHandler = config.getStreamLabsHandler();
-        if (twitchHandler != null) {
-            twitchHandler.disconnect();
-        }
-
-        twitchHandler = config.getTwitchHandler();
-        if (streamLabsHandler.isEnabled()) {
-            MinecraftForge.EVENT_BUS.register(streamLabsHandler);
-        }
-
-        if (FMLCommonHandler.instance().getSide().isServer()) {
-            twitchHandler.connect();
-        }
-    }
-
-    public void saveConfig(@Nonnull DiscoveryHandler discoveryHandler, @Nonnull HavokRewardsHandler havokRewardsHandler, @Nonnull StreamLabsHandler streamLabsHandler, @Nonnull TwitchHandler twitchHandler) throws IOException {
-        if (!configFile.exists()) {
-            configDir.mkdirs();
-            configFile.createNewFile();
-        }
-
-        MinecraftForge.EVENT_BUS.unregister(this.streamLabsHandler);
-        MinecraftForge.EVENT_BUS.unregister(this.twitchHandler);
-        FileWriter fileWriter = new FileWriter(configFile);
-        GSON.toJson(new Config(discoveryHandler, havokRewardsHandler, streamLabsHandler, twitchHandler), fileWriter);
-        fileWriter.close();
-        this.discoveryHandler = discoveryHandler;
-        this.havokRewardsHandler = havokRewardsHandler;
-        this.streamLabsHandler = streamLabsHandler;
-        this.twitchHandler.disconnect();
-        this.twitchHandler = twitchHandler;
-        if (this.streamLabsHandler.isEnabled()) {
-            MinecraftForge.EVENT_BUS.register(this.streamLabsHandler);
-        }
-
-        this.twitchHandler.connect();
-    }
-
-    @NetworkCheckHandler
-    public boolean versionCheck(Map<String, String> versions, Side side) {
-        if (side.isServer()) {
-            return !versions.containsKey(Reference.MOD_ID) || versions.get(Reference.MOD_ID).equals(Reference.VERSION);
-        }
-
-        return true;
+    @Nonnull
+    public StreamlabsHandler getStreamLabsHandler() {
+        return streamLabsHandler;
     }
 }

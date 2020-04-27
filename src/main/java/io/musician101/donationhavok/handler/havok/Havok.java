@@ -1,7 +1,7 @@
 package io.musician101.donationhavok.handler.havok;
 
 import io.musician101.donationhavok.DonationHavok;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.math.BlockPos;
 
 public abstract class Havok {
@@ -16,9 +16,9 @@ public abstract class Havok {
         return delay;
     }
 
-    public abstract void wreak(EntityPlayer player, BlockPos originalPos);
+    public abstract void wreak(PlayerEntity player, BlockPos originalPos);
 
     final void wreak(String taskName, Runnable runnable) {
-        DonationHavok.INSTANCE.getScheduler().scheduleTask(taskName, delay, runnable);
+        DonationHavok.getInstance().getScheduler().scheduleTask(taskName, delay, runnable);
     }
 }

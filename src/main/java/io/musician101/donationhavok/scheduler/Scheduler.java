@@ -3,11 +3,11 @@ package io.musician101.donationhavok.scheduler;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
-import net.minecraftforge.fml.common.eventhandler.SubscribeEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.Phase;
-import net.minecraftforge.fml.common.gameevent.TickEvent.ServerTickEvent;
-import net.minecraftforge.fml.common.gameevent.TickEvent.Type;
-import net.minecraftforge.fml.relauncher.Side;
+import net.minecraftforge.event.TickEvent.Phase;
+import net.minecraftforge.event.TickEvent.ServerTickEvent;
+import net.minecraftforge.event.TickEvent.Type;
+import net.minecraftforge.eventbus.api.SubscribeEvent;
+import net.minecraftforge.fml.LogicalSide;
 
 public final class Scheduler {
 
@@ -19,7 +19,7 @@ public final class Scheduler {
 
     @SubscribeEvent
     public void onTick(ServerTickEvent event) {
-        if (event.side == Side.SERVER && event.type == Type.SERVER && event.phase == Phase.START) {
+        if (event.side == LogicalSide.SERVER && event.type == Type.SERVER && event.phase == Phase.START) {
             List<HavokTask> tempTasks = tasks.stream().filter(task -> task.getDelayLeft() >= 0).collect(Collectors.toList());
             tasks.clear();
             tasks.addAll(tempTasks);

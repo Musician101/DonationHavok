@@ -5,20 +5,20 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
-import io.musician101.donationhavok.handler.havok.HavokItemStack.Serializer;
 import io.musician101.donationhavok.util.json.Keys;
 import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
-import io.musician101.donationhavok.util.json.adapter.TypeOf;
 import java.lang.reflect.Type;
-import net.minecraft.entity.item.EntityItem;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.init.Items;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.item.ItemStack;
+import net.minecraft.item.Items;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.LogicalSidedProvider;
 
-@TypeOf(Serializer.class)
 public class HavokItemStack extends Havok {
 
     private final ItemStack itemStack;
@@ -26,7 +26,7 @@ public class HavokItemStack extends Havok {
     public HavokItemStack() {
         super(0);
         this.itemStack = new ItemStack(Items.WHEAT_SEEDS);
-        itemStack.setStackDisplayName("Duck Feed");
+        itemStack.setDisplayName(new StringTextComponent("Duck Feed"));
     }
 
     public HavokItemStack(int delay, ItemStack itemStack) {
@@ -39,12 +39,10 @@ public class HavokItemStack extends Havok {
     }
 
     @Override
-    public void wreak(EntityPlayer player, BlockPos originalPos) {
-        World world = FMLCommonHandler.instance().getMinecraftServerInstance().getEntityWorld();
-        EntityItem item = new EntityItem(world);
-        item.setItem(itemStack);
-        item.setPositionAndRotation(originalPos.getX(), originalPos.getY() + 1, originalPos.getZ(), 0, 0);
-        world.spawnEntity(item);
+    public void wreak(PlayerEntity player, BlockPos originalPos) {
+        World world = LogicalSidedProvider.WORKQUEUE.<MinecraftServer>get(LogicalSide.SERVER).getWorld(player.dimension);
+        ItemEntity item = new ItemEntity(world, originalPos.getX(), originalPos.getY() + 1, originalPos.getZ(), itemStack);
+        world.addEntity(item);
     }
 
     public static class Serializer extends BaseSerializer<HavokItemStack> {
@@ -54,7 +52,7 @@ public class HavokItemStack extends Havok {
             JsonObject jsonObject = json.getAsJsonObject();
             int delay = deserialize(jsonObject, context, Keys.DELAY, 0);
             ItemStack defaultStack = new ItemStack(Items.WHEAT_SEEDS);
-            defaultStack.setStackDisplayName("Duck Feed");
+            defaultStack.setDisplayName(new StringTextComponent("Duck Feed"));
             ItemStack itemStack = deserialize(jsonObject, context, Keys.ITEM_STACK, defaultStack);
             return new HavokItemStack(delay, itemStack);
         }

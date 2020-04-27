@@ -7,15 +7,14 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import io.musician101.donationhavok.util.json.Keys;
 import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
-import io.musician101.donationhavok.util.json.adapter.TypeOf;
 import java.lang.reflect.Type;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.SoundCategory;
 import net.minecraft.util.SoundEvent;
 import net.minecraft.util.math.BlockPos;
+import net.minecraftforge.registries.ForgeRegistries;
 
-@TypeOf(HavokSound.Serializer.class)
 public class HavokSound extends HavokDoubleOffset {
 
     private final float pitch;
@@ -26,7 +25,7 @@ public class HavokSound extends HavokDoubleOffset {
         super(0, 0D, 0D, 0D);
         this.pitch = 1F;
         this.volume = 1F;
-        this.soundEvent = SoundEvent.REGISTRY.getObject(new ResourceLocation("minecraft:entity.generic.explode"));
+        this.soundEvent = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation("minecraft:entity.generic.explode"));
     }
 
     public HavokSound(int delay, double xOffset, double yOffset, double zOffset, float pitch, float volume, SoundEvent soundEvent) {
@@ -49,7 +48,7 @@ public class HavokSound extends HavokDoubleOffset {
     }
 
     @Override
-    public void wreak(EntityPlayer player, BlockPos originalPos) {
+    public void wreak(PlayerEntity player, BlockPos originalPos) {
         wreak("HavokParticle-Delay:" + getDelay(), () -> player.getEntityWorld().playSound(player, originalPos.add(getXOffset(), getYOffset(), getZOffset()), soundEvent, SoundCategory.MASTER, volume, pitch));
     }
 
@@ -65,7 +64,7 @@ public class HavokSound extends HavokDoubleOffset {
             float pitch = deserialize(jsonObject, context, Keys.PITCH, 0F);
             float volume = deserialize(jsonObject, context, Keys.VOLUME, 0F);
             String id = deserialize(jsonObject, context, Keys.ID, "entity.generic.explode");
-            SoundEvent sound = SoundEvent.REGISTRY.getObject(new ResourceLocation(id));
+            SoundEvent sound = ForgeRegistries.SOUND_EVENTS.getValue(new ResourceLocation(id));
             if (sound == null) {
                 throw new JsonParseException("Sound with id " + id + " does not exist.");
             }

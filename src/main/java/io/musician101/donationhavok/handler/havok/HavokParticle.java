@@ -5,33 +5,41 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
+import com.mojang.brigadier.StringReader;
+import com.mojang.brigadier.exceptions.CommandSyntaxException;
+import io.musician101.donationhavok.DonationHavok;
 import io.musician101.donationhavok.util.json.Keys;
 import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
-import io.musician101.donationhavok.util.json.adapter.TypeOf;
 import java.lang.reflect.Type;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.util.EnumParticleTypes;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.particles.ParticleType;
+import net.minecraft.particles.ParticleTypes;
+import net.minecraft.server.MinecraftServer;
+import net.minecraft.util.ResourceLocation;
 import net.minecraft.util.math.BlockPos;
-import net.minecraft.world.WorldServer;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraft.util.registry.Registry;
+import net.minecraft.util.text.StringTextComponent;
+import net.minecraft.util.text.Style;
+import net.minecraft.util.text.TextFormatting;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.LogicalSidedProvider;
 
-@TypeOf(HavokParticle.Serializer.class)
 public class HavokParticle extends HavokDoubleOffset {
 
-    private final EnumParticleTypes particle;
+    private final ParticleType particle;
     private final double xVelocity;
     private final double yVelocity;
     private final double zVelocity;
 
     public HavokParticle() {
         super(0, 0D, 0D, 0D);
-        this.particle = EnumParticleTypes.EXPLOSION_HUGE;
+        this.particle = ParticleTypes.EXPLOSION;
         this.xVelocity = 0;
         this.yVelocity = 0;
         this.zVelocity = 0;
     }
 
-    public HavokParticle(int delay, double xOffset, double yOffset, double zOffset, double xVelocity, double yVelocity, double zVelocity, EnumParticleTypes particle) {
+    public HavokParticle(int delay, double xOffset, double yOffset, double zOffset, double xVelocity, double yVelocity, double zVelocity, ParticleType particle) {
         super(delay, xOffset, yOffset, zOffset);
         this.particle = particle;
         this.xVelocity = xVelocity;
@@ -39,7 +47,7 @@ public class HavokParticle extends HavokDoubleOffset {
         this.zVelocity = zVelocity;
     }
 
-    public EnumParticleTypes getParticle() {
+    public ParticleType getParticle() {
         return particle;
     }
 
@@ -56,8 +64,17 @@ public class HavokParticle extends HavokDoubleOffset {
     }
 
     @Override
-    public void wreak(EntityPlayer player, BlockPos originalPos) {
-        wreak("HavokParticle-Delay:" + getDelay(), () -> ((WorldServer) FMLCommonHandler.instance().getMinecraftServerInstance().getEntityWorld()).spawnParticle(particle, originalPos.getX() + getXOffset(), originalPos.getY() + getYOffset(), originalPos.getZ() + getZOffset(), 1, xVelocity, yVelocity, zVelocity, 1));
+    public void wreak(PlayerEntity player, BlockPos originalPos) {
+        wreak("HavokParticle-Delay:" + getDelay(), () -> {
+            try {
+                LogicalSidedProvider.WORKQUEUE.<MinecraftServer>get(LogicalSide.SERVER).getWorld(player.dimension).spawnParticle(particle.getDeserializer().deserialize(particle, new StringReader("")), originalPos.getX() + getXOffset(), originalPos.getY() + getYOffset(), originalPos.getZ() + getZOffset(), 1, xVelocity, yVelocity, zVelocity, 1);
+            }
+            catch (CommandSyntaxException e) {
+                String message = "Particle parse error: " + particle.getRegistryName().toString();
+                player.sendMessage(new StringTextComponent(message).setStyle(new Style().setColor(TextFormatting.RED)));
+                DonationHavok.getInstance().getLogger().error(message, e);
+            }
+        });
     }
 
     public static class Serializer extends BaseSerializer<HavokParticle> {
@@ -72,8 +89,8 @@ public class HavokParticle extends HavokDoubleOffset {
             double xVelocity = deserialize(jsonObject, context, Keys.X_VELOCITY, 0D);
             double yVelocity = deserialize(jsonObject, context, Keys.Y_VELOCITY, 0D);
             double zVelocity = deserialize(jsonObject, context, Keys.Z_VELOCITY, 0D);
-            String id = deserialize(jsonObject, context, Keys.ID, EnumParticleTypes.EXPLOSION_HUGE.getParticleName());
-            EnumParticleTypes particle = EnumParticleTypes.getByName(id);
+            String id = deserialize(jsonObject, context, Keys.ID, "explosion");
+            ParticleType particle = Registry.PARTICLE_TYPE.getValue(new ResourceLocation(id)).orElse(ParticleTypes.EXPLOSION);
             if (particle == null) {
                 throw new JsonParseException("Particle with id " + id + " doesn't exist.");
             }
@@ -84,7 +101,7 @@ public class HavokParticle extends HavokDoubleOffset {
         @Override
         public JsonElement serialize(HavokParticle src, Type typeOfSrc, JsonSerializationContext context) {
             JsonObject jsonObject = new JsonObject();
-            serialize(jsonObject, context, Keys.ID, src.getParticle().getParticleName());
+            serialize(jsonObject, context, Keys.ID, src.getParticle().getRegistryName().toString());
             serialize(jsonObject, context, Keys.DELAY, src.getDelay());
             serialize(jsonObject, context, Keys.X_OFFSET_DOUBLE, src.getXOffset());
             serialize(jsonObject, context, Keys.Y_OFFSET_DOUBLE, src.getYOffset());

@@ -13,7 +13,9 @@ import java.util.Collections;
 import java.util.List;
 import java.util.stream.Stream;
 import javax.annotation.Nonnull;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.LogicalSidedProvider;
 import org.apache.commons.lang3.StringUtils;
 
 public class PlayersCommand extends Command {
@@ -29,8 +31,8 @@ public class PlayersCommand extends Command {
     @Override
     public void executeCommand(String user, String channel, String[] args) {
         String atUser = "@" + user;
-        FMLCommonHandler fml = FMLCommonHandler.instance();
-        if (fml.getSide().isServer()) {
+        MinecraftServer server = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.SERVER);
+        if (server.isDedicatedServer()) {
             if (args.length == 0) {
                 bot.sendMessage(atUser + ", here's the current list of online players: " + StringUtils.join(getOnlinePlayerNames(), ", "), channel);
             }
@@ -46,7 +48,7 @@ public class PlayersCommand extends Command {
     }
 
     private String[] getOnlinePlayerNames() {
-        return FMLCommonHandler.instance().getMinecraftServerInstance().getPlayerList().getOnlinePlayerNames();
+        return LogicalSidedProvider.WORKQUEUE.<MinecraftServer>get(LogicalSide.SERVER).getPlayerList().getOnlinePlayerNames();
     }
 
     public static class Serializer extends BaseSerializer<PlayersCommand> {

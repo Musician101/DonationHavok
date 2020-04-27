@@ -1,7 +1,11 @@
 package io.musician101.donationhavok.handler.twitch;
 
 import io.musician101.donationhavok.DonationHavok;
-import io.musician101.donationhavok.handler.havok.HavokRewardsHandler;
+import io.musician101.donationhavok.Reference;
+import io.musician101.donationhavok.config.Config;
+import io.musician101.donationhavok.config.RewardsConfig;
+import io.musician101.donationhavok.config.TwitchConfig;
+import io.musician101.donationhavok.handler.SaleHandler;
 import io.musician101.donationhavok.handler.twitch.commands.CommandHandler;
 import io.musician101.donationhavok.handler.twitch.event.Cheer;
 import io.musician101.donationhavok.handler.twitch.event.MessageEvent;
@@ -14,23 +18,20 @@ import java.io.InputStreamReader;
 import java.io.OutputStreamWriter;
 import java.net.Socket;
 import java.util.Map;
-import java.util.concurrent.Executors;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraft.server.MinecraftServer;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.LogicalSidedProvider;
 import org.apache.logging.log4j.Logger;
 
 public final class TwitchBot implements Runnable {
 
     private final CommandHandler commandHandler = new CommandHandler();
-    private final String streamerName;
-    private boolean listenForBits = false;
-    private boolean listenForSubs = false;
     private BufferedReader reader;
     private boolean stopped = true;
     private BufferedWriter writer;
-    private Socket socket;
 
-    TwitchBot(String streamerName) {
-        this.streamerName = streamerName;
+    TwitchBot() {
+
     }
 
     public void connect() {
@@ -38,13 +39,14 @@ public final class TwitchBot implements Runnable {
             return;
         }
 
-        Logger logger = DonationHavok.INSTANCE.getLogger();
+        Logger logger = DonationHavok.getInstance().getLogger();
         try {
-            socket = new Socket("irc.twitch.tv", 6667);
+            Socket socket = new Socket("irc.twitch.tv", 6667);
             writer = new BufferedWriter(new OutputStreamWriter(socket.getOutputStream()));
             reader = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            writer.write("PASS @TOKEN@ \r\n");
+            writer.write("PASS oauth:fuyawivjrn1wubw9ublrqm1auc36x3 \r\n");
             writer.write("NICK DonationHavokBot\r\n");
+            writer.write("USER " + Reference.MOD_NAME + "-" + Reference.VERSION + " \r\n");
             writer.write("CAP REQ :twitch.tv/tags \r\n");
             writer.write("CAP REQ :twitch.tv/commands \r\n");
             writer.write("CAP REQ :twitch.tv/membership \r\n");
@@ -60,6 +62,8 @@ public final class TwitchBot implements Runnable {
                     logger.info(line);
                 }
             }
+
+            socket.close();
         }
         catch (IOException e) {
             e.printStackTrace();
@@ -68,10 +72,6 @@ public final class TwitchBot implements Runnable {
 
     public void disconnect() {
         try {
-            if (socket != null) {
-                socket.close();
-            }
-
             if (reader != null) {
                 reader.close();
             }
@@ -81,7 +81,7 @@ public final class TwitchBot implements Runnable {
             }
         }
         catch (IOException e) {
-            DonationHavok.INSTANCE.getLogger().error("Bot failed to close read/write!", e);
+            DonationHavok.getInstance().getLogger().error("Bot failed to close read/write!", e);
         }
     }
 
@@ -90,41 +90,33 @@ public final class TwitchBot implements Runnable {
     }
 
     private void handleEvent(MessageEvent event) {
+        DonationHavok instance = DonationHavok.getInstance();
+        Config config = instance.getConfig();
+        TwitchConfig twitchConfig = config.getTwitchConfig();
         Map<String, String> tags = event.getTags();
         String commandType = event.getCommandType();
         if (commandType.equals("USERNOTICE") && tags.containsKey("msg-id")) {
             String msgId = tags.get("msg-id");
-            if (listenForSubs) {
-                switch (msgId) {
-                    case "sub":
-                    case "resub":
-                    case "subgift":
-                    case "anonsubgift":
-                    case "submysterygift":
-                    case "giftpaidupgrade":
-                    case "rewardgift":
-                    case "anongiftpaidupgrade":
-                    case "primepaidupgrade":
-                        String channel = event.getChannelName().orElse("");
-                        String user = event.getTagValue("display-name").orElse("");
-                        SubPlan subPlan = event.getTagValue("msg-param-sub-plan").flatMap(SubPlan::fromString).orElse(SubPlan.UNKNOWN);
-                        boolean isResub = event.getTagValue("msg-id").filter(id -> id.equalsIgnoreCase("resub")).isPresent();
-                        int streak = event.getTagValue("msg-param-months").map(s -> {
-                            try {
-                                return Integer.parseInt(s);
-                            }
-                            catch (NumberFormatException e) {
-                                return 1;
-                            }
-                        }).filter(i -> i > 0).orElse(1);
+            if ((msgId.equals("sub") || msgId.equals("resub") || msgId.equals("subgift")) && twitchConfig.doSubsTrigger()) {
+                String channel = event.getChannelName().orElse("");
+                String subBuyer = event.getTagValue("display-name").orElse("");
+                String subReceiver = event.getTagValue("msg-param-recipient-id").orElse(subBuyer);
+                SubPlan subPlan = event.getTagValue("msg-param-sub-plan").flatMap(SubPlan::fromString).orElse(SubPlan.UNKNOWN);
+                boolean isResub = event.getTagValue("msg-id").filter(id -> id.equalsIgnoreCase("resub")).isPresent();
+                int streak = event.getTagValue("msg-param-months").map(s -> {
+                    try {
+                        return Integer.parseInt(s);
+                    }
+                    catch (NumberFormatException e) {
+                        return 1;
+                    }
+                }).filter(i -> i > 0).orElse(1);
 
-                        Subscription subscription = new Subscription(channel, user, subPlan, isResub, streak, event.getMessage().orElse(""));
-                        runSubscription(subscription);
-                }
+                runSubscription(new Subscription(channel, subBuyer, subReceiver, subPlan, isResub, streak, event.getMessage().orElse("")));
             }
         }
         else if (event.getCommandType().equals("PRIVMSG")) {
-            if (event.getTags().containsKey("bits") && listenForBits) {
+            if (event.getTags().containsKey("bits") && twitchConfig.doBitsTrigger()) {
                 String channel = event.getChannelName().orElse("");
                 String user = event.getTagValue("display-name").orElse("");
                 String message = event.getMessage().orElse("");
@@ -136,63 +128,30 @@ public final class TwitchBot implements Runnable {
                         return 1;
                     }
                 }).filter(i -> i > 0).orElse(1);
-                Cheer cheer = new Cheer(channel, user, bits, message);
-                runCheer(cheer);
+                runCheer(new Cheer(channel, user, bits, message));
             }
-
-            event.getMessage().filter(m -> m.startsWith("!")).ifPresent(m -> commandHandler.processCommand(m, event.getTagValue("display-name").orElse(""), event.getPermissions()));
+            else if (event.getMessage().filter(m -> m.startsWith("!")).isPresent()) {
+                commandHandler.processCommand(event);
+            }
         }
     }
 
-    public boolean isListeningForBits() {
-        return listenForBits;
-    }
-
-    public boolean isListeningForSubs() {
-        return listenForSubs;
-    }
-
-    public void setListeningForSubs(boolean listenForSubs) {
-        this.listenForSubs = listenForSubs;
-    }
-
-    public boolean isRunning() {
-        return !stopped;
-    }
-
-    public void joinChannel(String channel) {
-        sendRawMessage("JOIN #" + channel + "\r\n");
-        DonationHavok.INSTANCE.getLogger().info("> JOIN " + channel);
-    }
-
-    public void leaveChannel(String channel) {
-        sendRawMessage("PART #" + channel);
-        DonationHavok.INSTANCE.getLogger().info("> PART " + channel);
-    }
-
-    @Override
-    public void run() {
-        connect();
-        joinChannel(streamerName);
-        start();
-    }
-
-    public void runCheer(Cheer cheer) {
-        FMLCommonHandler.instance().getMinecraftServerInstance().callFromMainThread(Executors.callable(() -> {
-            HavokRewardsHandler handler = DonationHavok.INSTANCE.getRewardsHandler();
-            handler.getPlayer().ifPresent(player -> handler.getRewards(cheer.getBits() / 100D).ifPresent(rewards -> {
-                DonationHavok.INSTANCE.getDiscoveryHandler().rewardsDiscovered(handler.getRewards().floorKey(cheer.getBits() / 100D), cheer.getUser(), rewards);
-                handler.generateBook(player, cheer.getUser(), cheer.getMessage(), rewards);
+    public static void runCheer(Cheer cheer) {
+        LogicalSidedProvider.WORKQUEUE.<MinecraftServer>get(LogicalSide.SERVER).runImmediately(() -> {
+            Config config = DonationHavok.getInstance().getConfig();
+            RewardsConfig rewardsConfig = config.getRewardsConfig();
+            config.getGeneralConfig().getPlayer().ifPresent(player -> rewardsConfig.getRewardContents(SaleHandler.getDiscountedAmount(cheer.getBits() / 100D)).ifPresent(rewards -> {
+                DonationHavok.getInstance().getDiscoveryHandler().rewardsDiscovered(rewardsConfig.getRewards().floorKey(cheer.getBits() / 100D), cheer.getUser(), rewards);
                 rewards.wreak(cheer);
             }));
-        }));
+        });
     }
 
-    public void runSubscription(Subscription subscription) {
-        FMLCommonHandler.instance().getMinecraftServerInstance().addScheduledTask(() -> {
-            TwitchHandler twitchHandler = DonationHavok.INSTANCE.getTwitchHandler();
-            boolean factorSubStreak = twitchHandler.factorSubStreak();
-            boolean roundSubs = twitchHandler.roundSubs();
+    public static void runSubscription(Subscription subscription) {
+        LogicalSidedProvider.WORKQUEUE.<MinecraftServer>get(LogicalSide.SERVER).runImmediately(() -> {
+            TwitchConfig twitchConfig = DonationHavok.getInstance().getConfig().getTwitchConfig();
+            boolean factorSubStreak = twitchConfig.factorSubStreak();
+            boolean roundSubs = twitchConfig.roundSubs();
             double amount;
             int streak = subscription.getStreak();
             switch (subscription.getSubPlan()) {
@@ -207,24 +166,45 @@ public final class TwitchBot implements Runnable {
                     break;
             }
 
-            HavokRewardsHandler handler = DonationHavok.INSTANCE.getRewardsHandler();
-            handler.getPlayer().ifPresent(player -> handler.getRewards(factorSubStreak ? amount * subscription.getStreak() : amount).ifPresent(rewards -> {
-                DonationHavok.INSTANCE.getDiscoveryHandler().rewardsDiscovered(handler.getRewards().floorKey(factorSubStreak ? amount * subscription.getStreak() : amount), subscription.getUser(), rewards);
-                handler.generateBook(player, subscription.getUser(), subscription.getMessage(), rewards);
+            Config config = DonationHavok.getInstance().getConfig();
+            RewardsConfig rewardsConfig = DonationHavok.getInstance().getConfig().getRewardsConfig();
+            config.getGeneralConfig().getPlayer().ifPresent(player -> rewardsConfig.getRewardContents(SaleHandler.getDiscountedAmount(amount * (factorSubStreak ? subscription.getStreak() : 1))).ifPresent(rewards -> {
+                DonationHavok.getInstance().getDiscoveryHandler().rewardsDiscovered(rewardsConfig.getRewards().floorKey(factorSubStreak ? amount * subscription.getStreak() : amount), subscription.getSubBuyer(), rewards);
                 rewards.wreak(subscription);
             }));
         });
     }
 
+    public boolean isRunning() {
+        return !stopped;
+    }
+
+    public void joinChannel(String channel) {
+        sendRawMessage("JOIN #" + channel + "\r\n");
+        DonationHavok.getInstance().getLogger().info("> JOIN " + channel);
+    }
+
+    public void leaveChannel(String channel) {
+        sendRawMessage("PART #" + channel);
+        DonationHavok.getInstance().getLogger().info("> PART " + channel);
+    }
+
+    @Override
+    public void run() {
+        connect();
+        joinChannel(DonationHavok.getInstance().getConfig().getTwitchConfig().getTwitchName());
+        start();
+    }
+
     public void sendMessage(Object message, String channel) {
         try {
-            writer.write("PRIVMSG #" + channel + " :" + message.toString() + "\r\n");
+            writer.write("PRIVMSG " + channel + " :" + message.toString() + "\r\n");
             writer.flush();
         }
         catch (IOException e) {
             e.printStackTrace();
         }
-        DonationHavok.INSTANCE.getLogger().info("> MSG " + channel + " : " + message.toString());
+        DonationHavok.getInstance().getLogger().info("> MSG " + channel + " : " + message.toString());
     }
 
     public void sendRawMessage(Object message) {
@@ -241,20 +221,16 @@ public final class TwitchBot implements Runnable {
         }
     }
 
-    public void setIsListeningForBits(boolean listenForBits) {
-        this.listenForBits = listenForBits;
-    }
-
     public void start() {
         if (isRunning()) {
             return;
         }
 
-        Logger logger = DonationHavok.INSTANCE.getLogger();
+        Logger logger = DonationHavok.getInstance().getLogger();
         String line;
         stopped = false;
         try {
-            while ((line = reader.readLine()) != null) {
+            while ((line = reader.readLine()) != null && !stopped) {
                 if (line.contains("PING :tmi.twitch.tv")) {
                     logger.debug("> PING");
                     logger.debug("< PONG " + line.substring(5));
@@ -272,10 +248,6 @@ public final class TwitchBot implements Runnable {
                     logger.debug("> " + line);
                     MessageEvent event = new MessageEvent(line);
                     handleEvent(event);
-                }
-
-                if (stopped) {
-                    break;
                 }
             }
         }

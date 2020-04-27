@@ -6,10 +6,11 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import io.musician101.donationhavok.DonationHavok;
+import io.musician101.donationhavok.config.Config;
+import io.musician101.donationhavok.config.RewardsConfig;
 import io.musician101.donationhavok.handler.discovery.Discovery;
 import io.musician101.donationhavok.handler.discovery.DiscoveryHandler;
 import io.musician101.donationhavok.handler.havok.HavokRewards;
-import io.musician101.donationhavok.handler.havok.HavokRewardsHandler;
 import io.musician101.donationhavok.util.json.Keys;
 import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
 import java.lang.reflect.Type;
@@ -32,7 +33,9 @@ public class RewardsCommand extends Command {
 
     @Override
     public void executeCommand(String user, String channel, String[] args) {
-        HavokRewardsHandler hrh = DonationHavok.INSTANCE.getRewardsHandler();
+        DonationHavok instance = DonationHavok.getInstance();
+        Config config = instance.getConfig();
+        RewardsConfig rewardsConfig = config.getRewardsConfig();
         String atUser = "@" + user;
         if (args.length != 0) {
             double tier;
@@ -44,9 +47,9 @@ public class RewardsCommand extends Command {
                 return;
             }
 
-            DiscoveryHandler discoveryHandler = DonationHavok.INSTANCE.getDiscoveryHandler();
-            Optional<HavokRewards> rewards = hrh.getRewards(tier);
-            if (discoveryHandler.hideCurrentUntilDiscovered()) {
+            DiscoveryHandler discoveryHandler = DonationHavok.getInstance().getDiscoveryHandler();
+            Optional<HavokRewards> rewards = rewardsConfig.getRewardContents(tier);
+            if (config.getGeneralConfig().hideCurrentUntilDiscovered()) {
                 Optional<Discovery> discovery = discoveryHandler.getCurrentDiscovery(tier);
                 if (discovery.isPresent()) {
                     bot.sendMessage(atUser + ", for " + tier + " you can trigger" + discovery.get().getRewardName() + ".", channel);
@@ -72,7 +75,7 @@ public class RewardsCommand extends Command {
             return;
         }
 
-        bot.sendMessage(atUser + ", here are the available tiers: " + StringUtils.join(hrh.getRewards().keySet(), ", "), channel);
+        bot.sendMessage(atUser + ", here are the available tiers: " + StringUtils.join(rewardsConfig.getRewards().keySet(), ", "), channel);
     }
 
     public static class Serializer extends BaseSerializer<RewardsCommand> {

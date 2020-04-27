@@ -5,13 +5,10 @@ import com.google.gson.JsonElement;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonPrimitive;
 import com.google.gson.JsonSerializationContext;
-import io.musician101.donationhavok.handler.twitch.commands.CommandPermission.Serializer;
 import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
-import io.musician101.donationhavok.util.json.adapter.TypeOf;
 import java.lang.reflect.Type;
 import java.util.stream.Stream;
 
-@TypeOf(Serializer.class)
 public enum CommandPermission {
 
     EVERYONE,
@@ -30,9 +27,7 @@ public enum CommandPermission {
 
         @Override
         public CommandPermission deserialize(JsonElement json, Type typeOfT, JsonDeserializationContext context) throws JsonParseException {
-            return Stream.of(CommandPermission.values())
-                    //.filter(permission -> permission == CommandPermission.PRIME_TURBO || permission == CommandPermission.PARTNER || permission == CommandPermission.OWNER)
-                    .filter(permission -> permission.toString().equalsIgnoreCase(json.getAsString())).findFirst().orElse(CommandPermission.BROADCASTER);
+            return Stream.of(CommandPermission.values()).filter(permission -> permission == CommandPermission.PRIME_TURBO || permission == CommandPermission.PARTNER || permission == CommandPermission.OWNER).filter(permission -> permission.toString().equalsIgnoreCase(json.getAsString())).findFirst().orElse(CommandPermission.BROADCASTER);
         }
 
         @Override

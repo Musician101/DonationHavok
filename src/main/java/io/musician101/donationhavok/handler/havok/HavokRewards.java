@@ -6,32 +6,41 @@ import com.google.gson.JsonObject;
 import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import io.musician101.donationhavok.DonationHavok;
-import io.musician101.donationhavok.handler.StreamLabsHandler.Donation;
+import io.musician101.donationhavok.handler.SaleHandler;
+import io.musician101.donationhavok.handler.StreamlabsHandler.Donation;
 import io.musician101.donationhavok.handler.twitch.event.Cheer;
 import io.musician101.donationhavok.handler.twitch.event.SubPlan;
 import io.musician101.donationhavok.handler.twitch.event.Subscription;
 import io.musician101.donationhavok.util.json.Keys;
 import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
-import io.musician101.donationhavok.util.json.adapter.TypeOf;
 import java.lang.reflect.Type;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
+import java.util.Optional;
 import java.util.stream.Collectors;
 import javax.annotation.Nonnull;
 import net.minecraft.client.Minecraft;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.item.ItemEntity;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.item.Items;
+import net.minecraft.item.ItemStack;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.nbt.ListNBT;
+import net.minecraft.nbt.StringNBT;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.server.management.PlayerList;
+import net.minecraft.util.math.BlockPos;
 import net.minecraft.util.text.ITextComponent;
 import net.minecraft.util.text.Style;
-import net.minecraft.util.text.TextComponentString;
+import net.minecraft.util.text.StringTextComponent;
 import net.minecraft.util.text.TextFormatting;
-import net.minecraftforge.fml.common.FMLCommonHandler;
-import net.minecraftforge.fml.server.FMLServerHandler;
+import net.minecraft.world.World;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.LogicalSidedProvider;
 
-@TypeOf(HavokRewards.Serializer.class)
 public class HavokRewards {
 
     private final boolean allowTargetViaNote;
@@ -184,9 +193,10 @@ public class HavokRewards {
     }
 
     @Nonnull
-    private List<EntityPlayer> parseTargetPlayers(@Nonnull String note) {
-        if (FMLCommonHandler.instance().getSide().isServer()) {
-            PlayerList playerList = FMLServerHandler.instance().getServer().getPlayerList();
+    private List<PlayerEntity> parseTargetPlayers(@Nonnull String note) {
+        MinecraftServer server = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.SERVER);
+        if (server.isDedicatedServer()) {
+            PlayerList playerList = server.getPlayerList();
             if (!targetPlayers.isEmpty()) {
                 return targetPlayers.stream().map(playerList::getPlayerByUsername).filter(Objects::nonNull).collect(Collectors.toList());
             }
@@ -196,23 +206,34 @@ public class HavokRewards {
             }
 
             if (allowTargetViaNote && note.contains("@")) {
-                return Arrays.stream(note.split(" ")).filter(s -> s.contains("@")).map(s -> s.replaceAll("[^a-zA-Z0-9]", "")).map(playerList::getPlayerByUsername).filter(Objects::nonNull).collect(Collectors.toList());
+                List<String> userNames = Arrays.stream(note.split("@")).filter(string -> string.contains("@")).map(username -> username.replace("@", "")).collect(Collectors.toList());
+                List<PlayerEntity> targetPlayers = new ArrayList<>();
+                userNames.forEach(username -> {
+                    PlayerEntity targetPlayer = playerList.getPlayerByUsername(username);
+                    if (targetPlayer != null && targetPlayers.stream().map(PlayerEntity::getUniqueID).collect(Collectors.toList()).contains(targetPlayer.getUniqueID())) {
+                        targetPlayers.add(targetPlayer);
+                    }
+                });
+
+                return targetPlayers;
             }
 
-            return DonationHavok.INSTANCE.getRewardsHandler().getPlayer().map(Collections::singletonList).orElse(Collections.emptyList());
+            Optional<PlayerEntity> player = DonationHavok.getInstance().getConfig().getGeneralConfig().getPlayer();
+            return player.map(Collections::singletonList).orElse(Collections.emptyList());
         }
 
-        return Collections.singletonList(Minecraft.getMinecraft().player);
+        return Collections.singletonList(Minecraft.getInstance().player);
     }
 
     private void sendMessage(@Nonnull ITextComponent firstLine) {
-        ITextComponent finalMessage = firstLine.appendSibling(new TextComponentString("\nThey triggered ").setStyle(new Style().setColor(TextFormatting.RESET)).appendSibling(new TextComponentString(name).setStyle(new Style().setColor(TextFormatting.AQUA))).appendSibling(new TextComponentString("!").setStyle(new Style().setColor(TextFormatting.RESET))));
-        if (FMLCommonHandler.instance().getSide().isServer()) {
-            PlayerList playerList = FMLServerHandler.instance().getServer().getPlayerList();
+        ITextComponent finalMessage = firstLine.appendSibling(new StringTextComponent("\nThey triggered ").setStyle(new Style().setColor(TextFormatting.RESET)).appendSibling(new StringTextComponent(name).setStyle(new Style().setColor(TextFormatting.AQUA))).appendSibling(new StringTextComponent("!").setStyle(new Style().setColor(TextFormatting.RESET))));
+        MinecraftServer server = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.SERVER);
+        if (server.isDedicatedServer()) {
+            PlayerList playerList = server.getPlayerList();
             playerList.sendMessage(finalMessage, false);
         }
         else {
-            Minecraft.getMinecraft().player.sendMessage(finalMessage);
+            Minecraft.getInstance().player.sendMessage(finalMessage);
         }
     }
 
@@ -225,15 +246,34 @@ public class HavokRewards {
     }
 
     public void wreak(@Nonnull Donation donation) {
-        DonationHavok.INSTANCE.getScheduler().scheduleTask("HavokRewards-Donation-Delay:" + delay, delay, () -> {
-            sendMessage(new TextComponentString(donation.getName()).setStyle(new Style().setColor(TextFormatting.AQUA)).appendSibling(new TextComponentString(" donated!").setStyle(new Style().setColor(TextFormatting.RESET))));
+        DonationHavok.getInstance().getScheduler().scheduleTask("HavokRewards-Donation-Delay:" + delay, delay, () -> {
+            generateBook(donation.getName(), donation.getNote());
+            sendMessage(new StringTextComponent(donation.getName()).setStyle(new Style().setColor(TextFormatting.AQUA)).appendSibling(new StringTextComponent(" donated!").setStyle(new Style().setColor(TextFormatting.RESET))));
             parseTargetPlayers(donation.getNote()).forEach(this::wreak);
         });
     }
 
-    //TODO add command to stop/start sales
-    public void wreak(@Nonnull EntityPlayer player) {
-        triggerTiers.forEach(tier -> DonationHavok.INSTANCE.getRewardsHandler().runDonation(player, tier));
+    private void generateBook(@Nonnull String donor, @Nonnull String message) {
+        MinecraftServer server = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.SERVER);
+        DonationHavok.getInstance().getConfig().getGeneralConfig().getPlayer().filter(p -> DonationHavok.getInstance().getConfig().getGeneralConfig().generateBook()).ifPresent(player -> {
+            CompoundNBT tag = new CompoundNBT();
+            tag.putString("author", donor);
+            tag.putString("title", name);
+            ListNBT pages = new ListNBT();
+            JsonObject jsonObject = new JsonObject();
+            jsonObject.addProperty("text", message);
+            pages.add(new StringNBT(jsonObject.toString()));
+            tag.put("pages", pages);
+            ItemStack book = new ItemStack(Items.WRITTEN_BOOK);
+            book.setTag(tag);
+            BlockPos pos = player.getPosition();
+            World world = server.getWorld(player.dimension);
+            world.addEntity(new ItemEntity(world, pos.getX(), pos.getY() + 1, pos.getZ(), book));
+        });
+    }
+
+    public void wreak(@Nonnull PlayerEntity player) {
+        triggerTiers.forEach(tier -> DonationHavok.getInstance().getStreamLabsHandler().runDonation(player, tier));
         blocks.forEach(block -> block.wreak(player, player.getPosition()));
         commands.forEach(command -> command.wreak(player, player.getPosition()));
         entities.forEach(entity -> entity.wreak(player, player.getPosition()));
@@ -244,47 +284,56 @@ public class HavokRewards {
         sounds.forEach(sound -> sound.wreak(player, player.getPosition()));
         structures.forEach(structure -> structure.wreak(player, player.getPosition()));
         if (triggersSale) {
-            HavokRewardsHandler.startSale(discount, saleLength);
+            SaleHandler.startSale(discount, saleLength);
         }
     }
 
     public void wreak(@Nonnull Subscription subscription) {
-        DonationHavok.INSTANCE.getScheduler().scheduleTask("HavokRewards-Subscription-Delay:" + delay, delay, () -> {
+        DonationHavok.getInstance().getScheduler().scheduleTask("HavokRewards-Subscription-Delay:" + delay, delay, () -> {
+            boolean isGift = subscription.isGift();
             int streak = subscription.getStreak();
             SubPlan subPlan = subscription.getSubPlan();
-            ITextComponent firstLine = new TextComponentString(subscription.getUser()).setStyle(new Style().setColor(TextFormatting.AQUA)).appendSibling(new TextComponentString(" just subscribed").setStyle(new Style().setColor(TextFormatting.RESET)));
+            ITextComponent firstLine = new StringTextComponent(subscription.getSubBuyer()).setStyle(new Style().setColor(TextFormatting.AQUA));
+            if (isGift) {
+                firstLine.appendSibling(new StringTextComponent(" just gifted "));
+            }
+            else {
+                firstLine.appendSibling(new StringTextComponent(" just subscribed").setStyle(new Style().setColor(TextFormatting.RESET)));
+            }
+
             if (subPlan == SubPlan.PRIME) {
-                firstLine.appendSibling(new TextComponentString(" with ").setStyle(new Style().setColor(TextFormatting.RESET))).appendSibling(new TextComponentString("Twitch Prime").setStyle(new Style().setColor(TextFormatting.DARK_PURPLE)));
+                firstLine.appendSibling(new StringTextComponent(" with ").setStyle(new Style().setColor(TextFormatting.RESET))).appendSibling(new StringTextComponent("Twitch Prime").setStyle(new Style().setColor(TextFormatting.DARK_PURPLE)));
             }
             else if (subPlan != SubPlan.UNKNOWN) {
                 String donationTier = "";
                 switch (subPlan) {
                     case TIER_1:
-                        donationTier = "with a $4.99 sub";
+                        donationTier = isGift ? "Tier 1" : "$4.99 sub";
                         break;
                     case TIER_2:
-                        donationTier = "with a $9.99 sub";
+                        donationTier = isGift ? "Tier 2" : "$9.99 sub";
                         break;
                     case TIER_3:
-                        donationTier = "with a $24.99 sub";
+                        donationTier = isGift ? "Tier 3" : "$24.99 sub";
                         break;
                 }
 
-                firstLine.appendSibling(new TextComponentString(" with a ").setStyle(new Style().setColor(TextFormatting.RESET))).appendSibling(new TextComponentString(donationTier).setStyle(new Style().setColor(TextFormatting.GOLD)));
+                firstLine.appendSibling(new StringTextComponent((isGift ? "" : " with") + " a ").setStyle(new Style().setColor(TextFormatting.RESET))).appendSibling(new StringTextComponent(donationTier).setStyle(new Style().setColor(TextFormatting.GOLD)));
             }
 
-            firstLine.appendSibling(new TextComponentString("!").setStyle(new Style().setColor(TextFormatting.RESET)));
+            firstLine.appendSibling(new StringTextComponent("!").setStyle(new Style().setColor(TextFormatting.RESET)));
             if (streak > 1) {
-                firstLine.appendSibling(new TextComponentString("\nThey have been subscribed for ").setStyle(new Style().setColor(TextFormatting.RESET))).appendSibling(new TextComponentString(streak + " months").setStyle(new Style().setColor(TextFormatting.AQUA))).appendSibling(new TextComponentString(" in a row!").setStyle(new Style().setColor(TextFormatting.RESET)));
+                firstLine.appendSibling(new StringTextComponent("\nThey have been subscribed for ").setStyle(new Style().setColor(TextFormatting.RESET))).appendSibling(new StringTextComponent(streak + " months").setStyle(new Style().setColor(TextFormatting.AQUA))).appendSibling(new StringTextComponent(" in a row!").setStyle(new Style().setColor(TextFormatting.RESET)));
             }
 
+            generateBook(subscription.getSubBuyer(), subscription.getMessage());
             sendMessage(firstLine);
             parseTargetPlayers(subscription.getMessage()).forEach(this::wreak);
         });
     }
 
     public void wreak(@Nonnull Cheer cheer) {
-        DonationHavok.INSTANCE.getScheduler().scheduleTask("HavokRewards-Cheer-Delay:" + delay, delay, () -> {
+        DonationHavok.getInstance().getScheduler().scheduleTask("HavokRewards-Cheer-Delay:" + delay, delay, () -> {
             int bits = cheer.getBits();
             TextFormatting color = TextFormatting.RED;
             if (bits >= 1 && bits <= 99) {
@@ -300,7 +349,8 @@ public class HavokRewards {
                 color = TextFormatting.BLUE;
             }
 
-            sendMessage(new TextComponentString(cheer.getUser()).setStyle(new Style().setColor(TextFormatting.AQUA)).appendSibling(new TextComponentString(" just cheered for ").setStyle(new Style().setColor(TextFormatting.RESET))).appendSibling(new TextComponentString(Integer.toString(bits) + " bits").setStyle(new Style().setColor(color))).appendSibling(new TextComponentString("!").setStyle(new Style().setColor(TextFormatting.RESET))));
+            generateBook(cheer.getUser(), cheer.getMessage());
+            sendMessage(new StringTextComponent(cheer.getUser()).setStyle(new Style().setColor(TextFormatting.AQUA)).appendSibling(new StringTextComponent(" just cheered for ").setStyle(new Style().setColor(TextFormatting.RESET))).appendSibling(new StringTextComponent(bits + " bits").setStyle(new Style().setColor(color))).appendSibling(new StringTextComponent("!").setStyle(new Style().setColor(TextFormatting.RESET))));
             parseTargetPlayers(cheer.getMessage()).forEach(this::wreak);
         });
     }

@@ -7,52 +7,48 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import io.musician101.donationhavok.util.json.Keys;
 import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
-import io.musician101.donationhavok.util.json.adapter.TypeOf;
 import java.lang.reflect.Type;
-import net.minecraft.entity.Entity;
-import net.minecraft.entity.EntityList;
-import net.minecraft.entity.player.EntityPlayer;
-import net.minecraft.nbt.NBTTagCompound;
-import net.minecraft.util.ResourceLocation;
+import net.minecraft.entity.EntityType;
+import net.minecraft.entity.player.PlayerEntity;
+import net.minecraft.nbt.CompoundNBT;
+import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
 import net.minecraft.world.World;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.LogicalSidedProvider;
 
-@TypeOf(HavokEntity.Serializer.class)
 public class HavokEntity extends HavokDoubleOffset {
 
-    private final NBTTagCompound nbtTagCompound;
+    private final CompoundNBT nbtTagCompound;
 
     public HavokEntity() {
         super(0, 0D, 0D, 0D);
-        this.nbtTagCompound = new NBTTagCompound();
-        nbtTagCompound.setString("id", "minecraft:chicken");
-        nbtTagCompound.setBoolean("CustomNameVisible", true);
-        nbtTagCompound.setString("CustomName", "Duck");
+        this.nbtTagCompound = new CompoundNBT();
+        nbtTagCompound.putString("id", "minecraft:chicken");
+        nbtTagCompound.putBoolean("CustomNameVisible", true);
+        nbtTagCompound.putString("CustomName", "Duck");
     }
 
-    public HavokEntity(int delay, double xOffset, double yOffset, double zOffset, NBTTagCompound nbtTagCompound) {
+    public HavokEntity(int delay, double xOffset, double yOffset, double zOffset, CompoundNBT nbtTagCompound) {
         super(delay, xOffset, yOffset, zOffset);
         this.nbtTagCompound = nbtTagCompound;
-        nbtTagCompound.removeTag("UUID");
-        nbtTagCompound.removeTag("UUIDMost");
-        nbtTagCompound.removeTag("UUIDLeast");
+        nbtTagCompound.remove("UUID");
+        nbtTagCompound.remove("UUIDMost");
+        nbtTagCompound.remove("UUIDLeast");
     }
 
-    public NBTTagCompound getNBTTagCompound() {
+    public CompoundNBT getCompoundNBT() {
         return nbtTagCompound;
     }
 
     @Override
-    public void wreak(EntityPlayer player, BlockPos originalPos) {
+    public void wreak(PlayerEntity player, BlockPos originalPos) {
         wreak("HavokEntity-Delay:" + getDelay(), () -> {
-            World world = FMLCommonHandler.instance().getMinecraftServerInstance().getEntityWorld();
-            Entity entity = EntityList.createEntityByIDFromName(new ResourceLocation(nbtTagCompound.getString("id")), world);
-            if (entity != null) {
-                entity.readFromNBT(nbtTagCompound);
+            World world = LogicalSidedProvider.WORKQUEUE.<MinecraftServer>get(LogicalSide.SERVER).getWorld(player.dimension);
+            EntityType.loadEntityUnchecked(nbtTagCompound, world).ifPresent(entity -> {
                 entity.setPosition(originalPos.getX() + getXOffset(), originalPos.getY() + getYOffset(), originalPos.getZ() + getZOffset());
-                world.spawnEntity(entity);
-            }
+                world.addEntity(entity);
+            });
         });
     }
 
@@ -65,11 +61,11 @@ public class HavokEntity extends HavokDoubleOffset {
             double xOffset = deserialize(jsonObject, context, Keys.X_OFFSET_DOUBLE, 0D);
             double yOffset = deserialize(jsonObject, context, Keys.Y_OFFSET_DOUBLE, 0D);
             double zOffset = deserialize(jsonObject, context, Keys.Z_OFFSET_DOUBLE, 0D);
-            NBTTagCompound defaultNBT = new NBTTagCompound();
-            defaultNBT.setString("id", "minecraft:chicken");
-            defaultNBT.setBoolean("CustomNameVisible", true);
-            defaultNBT.setString("CustomName", "Duck");
-            NBTTagCompound nbt = deserialize(jsonObject, context, Keys.NBT, defaultNBT);
+            CompoundNBT defaultNBT = new CompoundNBT();
+            defaultNBT.putString("id", "minecraft:chicken");
+            defaultNBT.putBoolean("CustomNameVisible", true);
+            defaultNBT.putString("CustomName", "{\"Duck\"}");
+            CompoundNBT nbt = deserialize(jsonObject, context, Keys.NBT, defaultNBT);
             return new HavokEntity(delay, xOffset, yOffset, zOffset, nbt);
         }
 
@@ -80,7 +76,7 @@ public class HavokEntity extends HavokDoubleOffset {
             serialize(jsonObject, context, Keys.X_OFFSET_DOUBLE, src.getXOffset());
             serialize(jsonObject, context, Keys.Y_OFFSET_DOUBLE, src.getYOffset());
             serialize(jsonObject, context, Keys.Z_OFFSET_DOUBLE, src.getZOffset());
-            serialize(jsonObject, context, Keys.NBT, src.getNBTTagCompound());
+            serialize(jsonObject, context, Keys.NBT, src.getCompoundNBT());
             return jsonObject;
         }
     }

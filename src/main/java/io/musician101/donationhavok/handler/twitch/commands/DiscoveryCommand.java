@@ -25,12 +25,12 @@ public class DiscoveryCommand extends Command {
     }
 
     public DiscoveryCommand(boolean enabled, @Nonnull List<CommandPermission> permissions) {
-        super("dh", "View a list of donors who discovered rewards of the past and present.", "!discovery <current | legendary>", enabled, permissions);
+        super("discovery", "View a list of donors who discovered rewards of the past and present.", "!discovery <current | legendary>", enabled, permissions);
     }
 
     @Override
     public void executeCommand(String user, String channel, String[] args) {
-        DiscoveryHandler discoveryHandler = DonationHavok.INSTANCE.getDiscoveryHandler();
+        DiscoveryHandler discoveryHandler = DonationHavok.getInstance().getDiscoveryHandler();
         String atUser = "@" + user;
         if (args.length != 0) {
             String type = args[0];

@@ -15,26 +15,19 @@ import java.util.Optional;
 import javax.annotation.Nonnull;
 import javax.annotation.Nullable;
 
-import static io.musician101.donationhavok.util.json.JsonKeyProcessor.GSON;
+import static io.musician101.donationhavok.util.json.Keys.GSON;
 
 @SuppressWarnings("unchecked")
 public class JsonKeyImpl<J extends JsonElement, V> {
 
     @Nonnull
     private final String key;
-    @Nullable
-    private final Object serializer;
     @Nonnull
     private final TypeToken<V> tokenType;
 
     private JsonKeyImpl(@Nonnull String key, @Nonnull TypeToken<V> tokenType) {
-        this(key, tokenType, null);
-    }
-
-    JsonKeyImpl(@Nonnull String key, @Nonnull TypeToken<V> tokenType, @Nullable Object serializer) {
         this.key = key;
         this.tokenType = tokenType;
-        this.serializer = serializer;
     }
 
     public static JsonKeyImpl<JsonPrimitive, BigDecimal> bigDecimalKey(@Nonnull String key) {
@@ -69,16 +62,16 @@ public class JsonKeyImpl<J extends JsonElement, V> {
         return new JsonKeyImpl<>(key, TypeToken.get(Integer.class));
     }
 
-    public static <J extends JsonElement, V> JsonKeyImpl<J, V> key(@Nonnull String key, @Nonnull TypeToken<V> typeToken, @Nullable Object typeAdapter) {
-        return new JsonKeyImpl<>(key, typeToken, typeAdapter);
+    public static <J extends JsonElement, V> JsonKeyImpl<J, V> key(@Nonnull String key, @Nonnull TypeToken<V> typeToken) {
+        return new JsonKeyImpl<>(key, typeToken);
     }
 
-    public static <V> JsonKeyImpl<JsonArray, List<V>> listKey(@Nonnull String key, Class<V> valueClass, @Nullable Object typeAdapter) {
-        return new JsonKeyImpl<>(key, (TypeToken<List<V>>) TypeToken.getParameterized(List.class, valueClass), typeAdapter);
+    public static <V> JsonKeyImpl<JsonArray, List<V>> listKey(@Nonnull String key, Class<V> valueClass) {
+        return new JsonKeyImpl<>(key, (TypeToken<List<V>>) TypeToken.getParameterized(List.class, valueClass));
     }
 
-    public static <K, V> JsonKeyImpl<JsonArray, Map<K, V>> listKey(@Nonnull String key, Class<K> keyClass, Class<V> valueClass, @Nullable Object typeAdapter) {
-        return new JsonKeyImpl<>(key, (TypeToken<Map<K, V>>) TypeToken.getParameterized(Map.class, keyClass, valueClass), typeAdapter);
+    public static <K, V> JsonKeyImpl<JsonArray, Map<K, V>> listKey(@Nonnull String key, Class<K> keyClass, Class<V> valueClass) {
+        return new JsonKeyImpl<>(key, (TypeToken<Map<K, V>>) TypeToken.getParameterized(Map.class, keyClass, valueClass));
     }
 
     public static JsonKeyImpl<JsonPrimitive, Long> longKey(@Nonnull String key) {
@@ -134,11 +127,6 @@ public class JsonKeyImpl<J extends JsonElement, V> {
     @Nonnull
     public TypeToken<V> getTokenType() {
         return tokenType;
-    }
-
-    @Nonnull
-    public Optional<Object> getTypeAdapter() {
-        return Optional.ofNullable(serializer);
     }
 
     @Nonnull

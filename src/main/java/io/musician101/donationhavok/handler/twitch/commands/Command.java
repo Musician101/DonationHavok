@@ -1,9 +1,9 @@
 package io.musician101.donationhavok.handler.twitch.commands;
 
 import io.musician101.donationhavok.handler.twitch.TwitchBot;
+import io.musician101.donationhavok.handler.twitch.event.MessageEvent;
 import java.util.Collections;
 import java.util.List;
-import java.util.Set;
 
 public abstract class Command {
 
@@ -33,7 +33,7 @@ public abstract class Command {
         return description;
     }
 
-    public boolean getEnabled() {
+    public Boolean getEnabled() {
         return enabled;
     }
 
@@ -45,8 +45,8 @@ public abstract class Command {
         return usage;
     }
 
-    public boolean hasPermissions(Set<CommandPermission> userPermissions) {
-        for (CommandPermission permission : userPermissions) {
+    public Boolean hasPermissions(MessageEvent messageEvent) {
+        for (CommandPermission permission : messageEvent.getPermissions()) {
             if (getRequiredPermissions().contains(permission)) {
                 return true;
             }

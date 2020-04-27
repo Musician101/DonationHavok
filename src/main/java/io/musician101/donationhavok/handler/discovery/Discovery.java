@@ -7,11 +7,9 @@ import com.google.gson.JsonParseException;
 import com.google.gson.JsonSerializationContext;
 import io.musician101.donationhavok.util.json.Keys;
 import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
-import io.musician101.donationhavok.util.json.adapter.TypeOf;
 import java.lang.reflect.Type;
 import javax.annotation.Nonnull;
 
-@TypeOf(Discovery.Serializer.class)
 public class Discovery {
 
     private final double amount;

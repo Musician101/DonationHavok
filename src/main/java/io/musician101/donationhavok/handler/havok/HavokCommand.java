@@ -8,14 +8,13 @@ import com.google.gson.JsonSerializationContext;
 import io.musician101.donationhavok.handler.havok.HavokCommand.Serializer;
 import io.musician101.donationhavok.util.json.Keys;
 import io.musician101.donationhavok.util.json.adapter.BaseSerializer;
-import io.musician101.donationhavok.util.json.adapter.TypeOf;
 import java.lang.reflect.Type;
-import net.minecraft.entity.player.EntityPlayer;
+import net.minecraft.entity.player.PlayerEntity;
 import net.minecraft.server.MinecraftServer;
 import net.minecraft.util.math.BlockPos;
-import net.minecraftforge.fml.common.FMLCommonHandler;
+import net.minecraftforge.fml.LogicalSide;
+import net.minecraftforge.fml.LogicalSidedProvider;
 
-@TypeOf(Serializer.class)
 public class HavokCommand extends Havok {
 
     private final String command;
@@ -35,9 +34,9 @@ public class HavokCommand extends Havok {
     }
 
     @Override
-    public void wreak(EntityPlayer player, BlockPos originalPos) {
-        MinecraftServer server = FMLCommonHandler.instance().getMinecraftServerInstance();
-        server.getCommandManager().executeCommand(server, command);
+    public void wreak(PlayerEntity player, BlockPos originalPos) {
+        MinecraftServer server = LogicalSidedProvider.WORKQUEUE.get(LogicalSide.SERVER);
+        server.getCommandManager().handleCommand(server.getCommandSource(), command);
     }
 
     public static class Serializer extends BaseSerializer<HavokCommand> {

@@ -9,7 +9,7 @@ import io.musician101.donationhavok.util.json.Keys;
 import java.lang.reflect.Type;
 import net.minecraft.util.Mirror;
 import net.minecraft.util.Rotation;
-import net.minecraft.world.gen.structure.template.PlacementSettings;
+import net.minecraft.world.gen.feature.template.PlacementSettings;
 
 public class PlacementSettingsSerializer extends BaseSerializer<PlacementSettings> {
 
@@ -19,7 +19,6 @@ public class PlacementSettingsSerializer extends BaseSerializer<PlacementSetting
         PlacementSettings placementSettings = new PlacementSettings();
         placementSettings.setMirror(deserialize(jsonObject, context, Keys.MIRROR, Mirror.NONE));
         placementSettings.setRotation(deserialize(jsonObject, context, Keys.ROTATION, Rotation.NONE));
-        placementSettings.setIntegrity(deserialize(jsonObject, context, Keys.INTEGRITY, 1F));
         return placementSettings;
     }
 
@@ -28,7 +27,6 @@ public class PlacementSettingsSerializer extends BaseSerializer<PlacementSetting
         JsonObject jsonObject = new JsonObject();
         serialize(jsonObject, context, Keys.MIRROR, src.getMirror());
         serialize(jsonObject, context, Keys.ROTATION, src.getRotation());
-        serialize(jsonObject, context, Keys.INTEGRITY, src.getIntegrity());
         return jsonObject;
     }
 }

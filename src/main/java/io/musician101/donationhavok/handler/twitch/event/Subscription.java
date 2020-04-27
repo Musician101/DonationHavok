@@ -7,11 +7,13 @@ public class Subscription {
     private final String message;
     private final int streak;
     private final SubPlan subPlan;
-    private final String user;
+    private final String subBuyer;
+    private final String subReceiver;
 
-    public Subscription(String channel, String user, SubPlan subPlan, boolean isResub, int streak, String message) {
+    public Subscription(String channel, String subBuyer, String subReceiver, SubPlan subPlan, boolean isResub, int streak, String message) {
         this.channel = channel;
-        this.user = user;
+        this.subBuyer = subBuyer;
+        this.subReceiver = subReceiver;
         this.subPlan = subPlan;
         this.isResub = isResub;
         this.streak = streak;
@@ -34,8 +36,16 @@ public class Subscription {
         return subPlan;
     }
 
-    public String getUser() {
-        return user;
+    public String getSubBuyer() {
+        return subBuyer;
+    }
+
+    public String getSubReceiver() {
+        return subReceiver;
+    }
+
+    public boolean isGift() {
+        return subBuyer.equals(subReceiver);
     }
 
     public boolean isResub() {
