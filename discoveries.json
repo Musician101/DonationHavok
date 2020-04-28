@@ -1,0 +1,16 @@
+{
+  "current": [
+    {
+      "amount": 1.0,
+      "reward_name": "A Default Reward",
+      "donor_name": "Musician101"
+    }
+  ],
+  "legendary": [
+    {
+      "amount": 1.0,
+      "reward_name": "A Default Reward",
+      "donor_name": "Musician101"
+    }
+  ]
+}

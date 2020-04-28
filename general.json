@@ -1,0 +1,11 @@
+{
+  "generate_book": true,
+  "hide_current_until_discovered": true,
+  "replace_unbreakable_blocks": false,
+  "delay": 0,
+  "mc_name": "Musician101",
+  "non_replaceable_blocks": [
+    "minecraft:chest",
+    "minecraft:acacia_button"
+  ]
+}

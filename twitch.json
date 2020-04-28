@@ -1,0 +1,29 @@
+{
+  "bits_trigger": false,
+  "enable": false,
+  "factor_sub_streak": false,
+  "round_subs": false,
+  "subs_trigger": false,
+  "streamer_name": "Your Twitch name here!",
+  "commands": {
+    "enable": false,
+    "discovery": {
+      "enable": false,
+      "permissions": [
+        "BROADCASTER"
+      ]
+    },
+    "players": {
+      "enable": false,
+      "permissions": [
+        "BROADCASTER"
+      ]
+    },
+    "rewards": {
+      "enable": false,
+      "permissions": [
+        "BROADCASTER"
+      ]
+    }
+  }
+}
